@@ -1,55 +1,59 @@
 # Active Context: LawMint
 
-**Last Updated:** November 12, 2025 (Phase 6 Starting)
-**Current Phase:** Phase 6 - Document Sharing & Permissions  
-**Status:** ✅ Phase 0-5 Complete | 🟢 Phase 6 In Progress
+**Last Updated:** November 12, 2025 (Phase 7 Starting)
+**Current Phase:** Phase 7 - Document Management & Dashboard  
+**Status:** ✅ Phase 0-6 Complete | 🟢 Phase 7 In Progress
 
 ---
 
 ## Current Focus
 
-### Phase 6: Document Sharing & Permissions 🚀
+### Phase 7: Document Management & Dashboard 🚀
 
 **This Phase Objective:**
-- Create ShareDocumentModal component with radio buttons for visibility settings
-- Implement useFirmMembers hook to fetch firm members for sharing
-- Integrate share modal into DocumentEditorPage with permission controls
-- Test end-to-end sharing flow (private, shared, firm-wide)
-- Verify document-service share endpoint functionality
+- Create DocumentCard component with title, date, owner, status, and action dropdown
+- Update Dashboard with 3 tabs (My Documents, Shared With Me, Firm Documents)
+- Verify document list queries work correctly
+- Add filters and sorting to dashboard (Status, Search, Sort)
+- Test end-to-end dashboard flows
 - Estimated time: 1-2 days
 
-**Phase 6 Progress:**
+**Phase 7 Progress:**
 
-**Task 6.1: Share Modal Component & useFirmMembers Hook** ✅ COMPLETE
-- ✅ Created `useFirmMembers.ts` hook with React Query
-  - Fetches all firm members via auth-service
-  - Returns array of { uid, name, email, role }
-  - 5-minute cache stale time
-- ✅ Created `ShareDocumentModal.tsx` component
-  - Radio button options: Private / Shared with specific users / Firm-wide
-  - Multi-select dropdown for firm members with checkboxes
-  - Display of selected members as tags
-  - Save and cancel buttons with loading states
-  - Error handling with toast notifications
-  - Permission checks (only document owner can share)
-  - Professional UI with Steno-inspired styling
+**Task 7.1: Document Card Component** ✅ COMPLETE
+- ✅ Created `DocumentCard.tsx` component
+  - Display: Title, created date, status badge, visibility icon, word count
+  - Actions dropdown: Edit, Share, Export to Word, Delete (role-based)
+  - Click to open document in editor
+  - Visibility icons: Private (lock), Shared (users), Firm-wide (building)
+  - Status badges: Draft (amber), Final (green), Approved (blue)
+  - Owner name display (optional) for shared/firm-wide documents
+  - Role-based action visibility
 
-**Task 6.2: Integration & Permission Controls** ✅ COMPLETE
-- ✅ Updated `DocumentEditorPage.tsx`
-  - Imported ShareDocumentModal component
-  - Added isShareModalOpen state
-  - Updated handleShare to open modal
-  - Modal receives current sharing settings
-  - Modal integrated into JSX with conditional rendering
-- ✅ Verified document-service `/documents/:documentId/share` endpoint exists
-  - Validates user is document owner
-  - Updates visibility and sharedWith fields
-  - Returns success confirmation
-- ✅ Verified permission checks in DocumentEditor
-  - readOnly prop controls editor mode
-  - Permission banner shows for read-only access
+**Task 7.2: Dashboard with 3 Tabs** ✅ COMPLETE
+- ✅ Updated `Dashboard.tsx` page
+  - Tab navigation with document counts
+  - 3 tabs: My Documents, Shared With Me, Firm Documents
+  - Quick actions grid maintained (New Document, Templates, Team Members, Settings)
+  - Responsive grid layout for document cards (1-3 columns)
+  - Empty states with helpful CTAs
 
-**Status:** ✅ COMPLETE | All components created and integrated | Ready for Task 6.3 (Testing)
+**Task 7.3: Document List Queries** ✅ COMPLETE
+- ✅ Verified `useDocuments.ts` hooks
+  - `useUserDocuments()` - Fetch documents owned by user
+  - `useSharedDocuments()` - Fetch documents shared with user
+  - `useFirmDocuments()` - Fetch firm-wide documents
+  - All hooks use React Query with proper caching
+  - Proper error handling and loading states
+
+**Task 7.4: Filters & Sorting** ✅ COMPLETE
+- ✅ Search filter - Search by title or notes
+- ✅ Status filter - Draft, Final, Approved, or All
+- ✅ Sort options - Recent first, Oldest first, Alphabetical
+- ✅ Clear filters functionality
+- ✅ Dynamic document counts in tabs
+
+**Status:** ✅ COMPLETE | All tasks done | Ready for Phase 8 (Export Service)
 
 ---
 
