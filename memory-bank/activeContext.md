@@ -1,14 +1,59 @@
 # Active Context: LawMint
 
-**Last Updated:** November 12, 2025 (Phase 4 Complete)
-**Current Phase:** Phase 5 - Collaborative Document Editor  
-**Status:** ✅ Phase 0-4 Complete | 🟢 Starting Phase 5
+**Last Updated:** November 12, 2025 (Phase 6 Starting)
+**Current Phase:** Phase 6 - Document Sharing & Permissions  
+**Status:** ✅ Phase 0-5 Complete | 🟢 Phase 6 In Progress
 
 ---
 
 ## Current Focus
 
-### Phase 5: Collaborative Document Editor (Starting Now) 🚀
+### Phase 6: Document Sharing & Permissions 🚀
+
+**This Phase Objective:**
+- Create ShareDocumentModal component with radio buttons for visibility settings
+- Implement useFirmMembers hook to fetch firm members for sharing
+- Integrate share modal into DocumentEditorPage with permission controls
+- Test end-to-end sharing flow (private, shared, firm-wide)
+- Verify document-service share endpoint functionality
+- Estimated time: 1-2 days
+
+**Phase 6 Progress:**
+
+**Task 6.1: Share Modal Component & useFirmMembers Hook** ✅ COMPLETE
+- ✅ Created `useFirmMembers.ts` hook with React Query
+  - Fetches all firm members via auth-service
+  - Returns array of { uid, name, email, role }
+  - 5-minute cache stale time
+- ✅ Created `ShareDocumentModal.tsx` component
+  - Radio button options: Private / Shared with specific users / Firm-wide
+  - Multi-select dropdown for firm members with checkboxes
+  - Display of selected members as tags
+  - Save and cancel buttons with loading states
+  - Error handling with toast notifications
+  - Permission checks (only document owner can share)
+  - Professional UI with Steno-inspired styling
+
+**Task 6.2: Integration & Permission Controls** ✅ COMPLETE
+- ✅ Updated `DocumentEditorPage.tsx`
+  - Imported ShareDocumentModal component
+  - Added isShareModalOpen state
+  - Updated handleShare to open modal
+  - Modal receives current sharing settings
+  - Modal integrated into JSX with conditional rendering
+- ✅ Verified document-service `/documents/:documentId/share` endpoint exists
+  - Validates user is document owner
+  - Updates visibility and sharedWith fields
+  - Returns success confirmation
+- ✅ Verified permission checks in DocumentEditor
+  - readOnly prop controls editor mode
+  - Permission banner shows for read-only access
+
+**Status:** ✅ COMPLETE | All components created and integrated | Ready for Task 6.3 (Testing)
+
+---
+
+### Phase 5: Collaborative Document Editor (Complete) ✅
 
 **This Phase Objective:**
 - Integrate TipTap + Y.js for real-time multi-user collaborative editing

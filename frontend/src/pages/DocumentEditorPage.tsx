@@ -14,6 +14,7 @@ import * as Y from 'yjs';
 
 import DocumentEditor from '@/components/DocumentEditor';
 import AIRefinementSidebar from '@/components/AIRefinementSidebar';
+import { ShareDocumentModal } from '@/components/ShareDocumentModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDocument, useUpdateDocument } from '@/hooks/useDocuments';
 import { useCollaboration } from '@/hooks/useCollaboration';
@@ -37,6 +38,7 @@ const DocumentEditorPage: React.FC = () => {
   const [title, setTitle] = useState('Untitled Document');
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [ydoc] = useState(() => new Y.Doc());
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -135,8 +137,7 @@ const DocumentEditorPage: React.FC = () => {
 
   // Handle share
   const handleShare = () => {
-    // Open share modal (implement in next phase)
-    toast('Share modal would open here', { icon: '📤' });
+    setIsShareModalOpen(true);
   };
 
   // Handle go back
@@ -302,6 +303,21 @@ const DocumentEditorPage: React.FC = () => {
           />
         </div>
       </div>
+
+      {/* Share Document Modal */}
+      {document && (
+        <ShareDocumentModal
+          isOpen={isShareModalOpen}
+          onClose={() => setIsShareModalOpen(false)}
+          documentId={documentId || ''}
+          currentVisibility={document.visibility || 'private'}
+          currentSharedWith={document.sharedWith || []}
+          onShareSuccess={() => {
+            // Optionally refresh document data here
+            toast.success('Sharing settings updated');
+          }}
+        />
+      )}
     </div>
   );
 };

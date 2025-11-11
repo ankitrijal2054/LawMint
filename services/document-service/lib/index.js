@@ -386,7 +386,9 @@ expressApp.put('/documents/:documentId', verifyToken, async (req, res) => {
         await db.collection('documents').doc(documentId).update(updateData);
         res.status(200).json({
             success: true,
-            message: 'Document updated successfully',
+            data: {
+                message: 'Document updated successfully',
+            },
         });
     }
     catch (error) {
@@ -441,7 +443,9 @@ expressApp.delete('/documents/:documentId', verifyToken, async (req, res) => {
         }
         res.status(200).json({
             success: true,
-            message: 'Document deleted successfully',
+            data: {
+                message: 'Document deleted successfully',
+            },
         });
     }
     catch (error) {
@@ -638,7 +642,9 @@ expressApp.post('/documents/:documentId/share', verifyToken, async (req, res) =>
         });
         res.status(200).json({
             success: true,
-            message: 'Document sharing updated successfully',
+            data: {
+                message: 'Document sharing updated successfully',
+            },
         });
     }
     catch (error) {
