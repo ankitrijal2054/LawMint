@@ -54,6 +54,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.documentService = void 0;
 const functions = __importStar(require("firebase-functions"));
 const admin = __importStar(require("firebase-admin"));
+const firestore_1 = require("firebase-admin/firestore");
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const dotenv_1 = __importDefault(require("dotenv"));
@@ -251,7 +252,7 @@ expressApp.post('/documents', verifyToken, async (req, res) => {
         }
         // Create document in Firestore
         const documentId = (0, uuid_1.v4)();
-        const now = admin.firestore.FieldValue.serverTimestamp();
+        const now = firestore_1.FieldValue.serverTimestamp();
         const documentData = {
             documentId,
             firmId,
@@ -303,6 +304,12 @@ expressApp.get('/documents/:documentId', verifyToken, async (req, res) => {
             });
         }
         const document = docSnap.data();
+        if (!document) {
+            return res.status(404).json({
+                success: false,
+                error: 'Document not found',
+            });
+        }
         // Check permissions
         const isOwner = document.ownerId === uid;
         const isFirmWide = document.visibility === 'firm-wide' && document.firmId === (await getUserData(uid))?.firmId;
@@ -343,6 +350,12 @@ expressApp.put('/documents/:documentId', verifyToken, async (req, res) => {
             });
         }
         const document = docSnap.data();
+        if (!document) {
+            return res.status(404).json({
+                success: false,
+                error: 'Document not found',
+            });
+        }
         // Check permissions
         const isOwner = document.ownerId === uid;
         const isLawyer = await isAdminOrLawyer(uid);
@@ -355,7 +368,7 @@ expressApp.put('/documents/:documentId', verifyToken, async (req, res) => {
         }
         // Update document
         const updateData = {
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firestore_1.FieldValue.serverTimestamp(),
             'metadata.lastEditedBy': uid,
         };
         if (content !== undefined) {
@@ -394,6 +407,12 @@ expressApp.delete('/documents/:documentId', verifyToken, async (req, res) => {
             });
         }
         const document = docSnap.data();
+        if (!document) {
+            return res.status(404).json({
+                success: false,
+                error: 'Document not found',
+            });
+        }
         // Only owner can delete
         if (document.ownerId !== uid) {
             return res.status(403).json({
@@ -587,6 +606,12 @@ expressApp.post('/documents/:documentId/share', verifyToken, async (req, res) =>
             });
         }
         const document = docSnap.data();
+        if (!document) {
+            return res.status(404).json({
+                success: false,
+                error: 'Document not found',
+            });
+        }
         // Only owner can change sharing settings
         if (document.ownerId !== uid) {
             return res.status(403).json({
@@ -598,7 +623,7 @@ expressApp.post('/documents/:documentId/share', verifyToken, async (req, res) =>
         await db.collection('documents').doc(documentId).update({
             visibility,
             sharedWith: visibility === 'shared' ? sharedWith : [],
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firestore_1.FieldValue.serverTimestamp(),
         });
         res.status(200).json({
             success: true,
@@ -633,12 +658,14 @@ expressApp.post('/documents/upload-sources', verifyToken, async (req, res) => {
             const docSnap = await db.collection('documents').doc(documentId).get();
             if (docSnap.exists) {
                 const document = docSnap.data();
-                const belongsToFirm = await userBelongsToFirm(uid, document.firmId);
-                if (!belongsToFirm) {
-                    return res.status(403).json({
-                        success: false,
-                        error: 'User does not have access to this document',
-                    });
+                if (document) {
+                    const belongsToFirm = await userBelongsToFirm(uid, document.firmId);
+                    if (!belongsToFirm) {
+                        return res.status(403).json({
+                            success: false,
+                            error: 'User does not have access to this document',
+                        });
+                    }
                 }
             }
         }
@@ -680,7 +707,7 @@ expressApp.post('/documents/upload-sources', verifyToken, async (req, res) => {
                     fileType,
                     storagePath,
                     extractedText,
-                    uploadedAt: admin.firestore.FieldValue.serverTimestamp(),
+                    uploadedAt: firestore_1.FieldValue.serverTimestamp(),
                     uploadedBy: uid,
                 });
             }
@@ -694,8 +721,10 @@ expressApp.post('/documents/upload-sources', verifyToken, async (req, res) => {
         }
         res.status(200).json({
             success: true,
-            extractedTexts,
-            sourceDocuments,
+            data: {
+                extractedTexts,
+                sourceDocuments,
+            },
         });
     }
     catch (error) {

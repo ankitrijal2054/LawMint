@@ -29,7 +29,7 @@ interface StepData {
 
 export const NewDocument: React.FC = () => {
   const navigate = useNavigate();
-  const { user, firmId } = useAuth();
+  const { user } = useAuth();
 
   // State
   const [currentStep, setCurrentStep] = useState<Step>(1);
@@ -68,11 +68,11 @@ export const NewDocument: React.FC = () => {
   // HANDLERS
   // ============================================================================
 
-  const handleTemplateSelect = (templateId: string, content: string) => {
+  const handleTemplateSelect = (template: any) => {
     setStepData((prev) => ({
       ...prev,
-      templateId,
-      templateContent: content,
+      templateId: template.id || template.templateId,
+      templateContent: template.content,
     }));
   };
 
@@ -102,8 +102,8 @@ export const NewDocument: React.FC = () => {
 
   const handleGenerate = async () => {
     try {
-      if (!user || !firmId) {
-        throw new Error('User not authenticated');
+      if (!user || !user.firmId) {
+        throw new Error('User not authenticated or firm not selected');
       }
 
       setIsGenerating(true);
@@ -137,7 +137,7 @@ export const NewDocument: React.FC = () => {
       // Step 3: Create document in Firestore
       const createResponse = await createDocumentMutation.mutateAsync({
         title: `Demand Letter - ${new Date().toLocaleDateString()}`,
-        firmId,
+        firmId: user.firmId,
         templateId: stepData.templateId || undefined,
         sourceDocuments,
         visibility: 'private',
@@ -148,9 +148,11 @@ export const NewDocument: React.FC = () => {
       toast.success('Document generated successfully!');
 
       // Redirect to document editor
-      navigate(`/documents/${createResponse.documentId}/edit`, {
-        state: { newDocument: true },
-      });
+      if (createResponse) {
+        navigate(`/documents/${createResponse}/edit`, {
+          state: { newDocument: true },
+        });
+      }
     } catch (error) {
       setIsGenerating(false);
       toast.dismiss();
@@ -254,7 +256,6 @@ export const NewDocument: React.FC = () => {
 
               <TemplateSelector
                 onSelect={handleTemplateSelect}
-                selectedId={stepData.templateId || undefined}
               />
             </div>
           )}
