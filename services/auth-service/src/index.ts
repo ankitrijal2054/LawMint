@@ -15,7 +15,7 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import express, { Request, Response, NextFunction } from 'express';
-import cors from 'cors';
+import cors, { CorsOptions } from 'cors';
 import dotenv from 'dotenv';
 
 // Initialize environment variables
@@ -30,7 +30,31 @@ const auth = admin.auth();
 const expressApp = express();
 
 // Middleware
-expressApp.use(cors({ origin: true }));
+const defaultOrigins = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'https://lawmint.web.app',
+];
+
+const corsOrigins =
+  process.env.ALLOWED_ORIGINS?.split(',').map((origin) => origin.trim()).filter(Boolean) ??
+  defaultOrigins;
+
+const corsOptions: CorsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || corsOrigins.includes('*') || corsOrigins.includes(origin)) {
+      return callback(null, origin ?? corsOrigins[0]);
+    }
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 204,
+};
+
+expressApp.use(cors(corsOptions));
+expressApp.options('*', cors(corsOptions));
 expressApp.use(express.json());
 
 // ============================================================================

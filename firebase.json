@@ -2,23 +2,28 @@
   "functions": [
     {
       "source": "services/auth-service",
-      "codebase": "auth-service"
+      "codebase": "auth-service",
+      "runtime": "nodejs22"
     },
     {
       "source": "services/template-service",
-      "codebase": "template-service"
+      "codebase": "template-service",
+      "runtime": "nodejs22"
     },
     {
       "source": "services/document-service",
-      "codebase": "document-service"
+      "codebase": "document-service",
+      "runtime": "nodejs22"
     },
     {
       "source": "services/ai-service",
-      "codebase": "ai-service"
+      "codebase": "ai-service",
+      "runtime": "nodejs22"
     },
     {
       "source": "services/export-service",
-      "codebase": "export-service"
+      "codebase": "export-service",
+      "runtime": "nodejs22"
     }
   ],
   "firestore": {

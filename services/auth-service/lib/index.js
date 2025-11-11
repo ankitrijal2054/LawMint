@@ -63,7 +63,27 @@ const auth = admin.auth();
 // Initialize Express app
 const expressApp = (0, express_1.default)();
 // Middleware
-expressApp.use((0, cors_1.default)({ origin: true }));
+const defaultOrigins = [
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'https://lawmint.web.app',
+];
+const corsOrigins = process.env.ALLOWED_ORIGINS?.split(',').map((origin) => origin.trim()).filter(Boolean) ??
+    defaultOrigins;
+const corsOptions = {
+    origin: (origin, callback) => {
+        if (!origin || corsOrigins.includes('*') || corsOrigins.includes(origin)) {
+            return callback(null, origin ?? corsOrigins[0]);
+        }
+        return callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    optionsSuccessStatus: 204,
+};
+expressApp.use((0, cors_1.default)(corsOptions));
+expressApp.options('*', (0, cors_1.default)(corsOptions));
 expressApp.use(express_1.default.json());
 // ============================================================================
 // MIDDLEWARE
