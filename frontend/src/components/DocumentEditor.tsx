@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import Collaboration from '@tiptap/extension-collaboration';
-import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
+// import Collaboration from '@tiptap/extension-collaboration';
+// import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
 import * as Y from 'yjs';
 import {
   Bold,
@@ -50,16 +50,17 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
             depth: 100,
           },
         }),
-        Collaboration.configure({
-          document: ydoc,
-        }),
-        CollaborationCursor.configure({
-          provider: undefined, // Will be set by collaboration provider
-          user: {
-            name: 'You',
-            color: userColor,
-          },
-        }),
+        // TODO: Re-enable collaboration when provider is properly set up
+        // Collaboration.configure({
+        //   document: ydoc,
+        // }),
+        // CollaborationCursor.configure({
+        //   provider: undefined, // Will be set by collaboration provider
+        //   user: {
+        //     name: 'You',
+        //     color: userColor,
+        //   },
+        // }),
       ],
       content: initialContent || '<p>Start typing...</p>',
       editable: !readOnly,

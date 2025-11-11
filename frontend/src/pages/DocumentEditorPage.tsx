@@ -42,7 +42,7 @@ const DocumentEditorPage: React.FC = () => {
 
   // Data hooks
   const { data: document, isLoading } = useDocument(documentId || '');
-  const { mutate: updateDocument } = useUpdateDocument();
+  const { mutate: updateDocument } = useUpdateDocument(documentId || '');
   const { activeUsers, getActivityStatus } = useCollaboration({
     documentId: documentId || '',
     enabled: !!documentId,
@@ -85,10 +85,7 @@ const DocumentEditorPage: React.FC = () => {
 
       updateDocument(
         {
-          documentId,
           content: contentToSave || content,
-          title,
-          lastEditedBy: user.uid,
         },
         {
           onSuccess: () => {

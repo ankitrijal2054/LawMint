@@ -326,7 +326,9 @@ expressApp.get('/documents/:documentId', verifyToken, async (req: Request, res: 
 
     res.status(200).json({
       success: true,
-      document,
+      data: {
+        document,
+      },
     });
   } catch (error) {
     console.error('Error fetching document:', error);
@@ -396,7 +398,9 @@ expressApp.put('/documents/:documentId', verifyToken, async (req: Request, res: 
 
     res.status(200).json({
       success: true,
-      message: 'Document updated successfully',
+      data: {
+        message: 'Document updated successfully',
+      },
     });
   } catch (error) {
     console.error('Error updating document:', error);
@@ -458,7 +462,9 @@ expressApp.delete('/documents/:documentId', verifyToken, async (req: Request, re
 
     res.status(200).json({
       success: true,
-      message: 'Document deleted successfully',
+      data: {
+        message: 'Document deleted successfully',
+      },
     });
   } catch (error) {
     console.error('Error deleting document:', error);
@@ -528,8 +534,10 @@ expressApp.get('/documents/user/:uid', verifyToken, async (req: Request, res: Re
 
     res.status(200).json({
       success: true,
-      count: documents.length,
-      documents,
+      data: {
+        count: documents.length,
+        documents,
+      },
     });
   } catch (error) {
     console.error('Error listing user documents:', error);
@@ -570,8 +578,10 @@ expressApp.get('/documents/firm/:firmId', verifyToken, async (req: Request, res:
 
     res.status(200).json({
       success: true,
-      count: documents.length,
-      documents,
+      data: {
+        count: documents.length,
+        documents,
+      },
     });
   } catch (error) {
     console.error('Error listing firm documents:', error);
@@ -609,8 +619,10 @@ expressApp.get('/documents/shared/:uid', verifyToken, async (req: Request, res: 
 
     res.status(200).json({
       success: true,
-      count: documents.length,
-      documents,
+      data: {
+        count: documents.length,
+        documents,
+      },
     });
   } catch (error) {
     console.error('Error listing shared documents:', error);
@@ -673,7 +685,9 @@ expressApp.post('/documents/:documentId/share', verifyToken, async (req: Request
 
     res.status(200).json({
       success: true,
-      message: 'Document sharing updated successfully',
+      data: {
+        message: 'Document sharing updated successfully',
+      },
     });
   } catch (error) {
     console.error('Error updating document sharing:', error);

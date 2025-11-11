@@ -325,7 +325,9 @@ expressApp.get('/documents/:documentId', verifyToken, async (req, res) => {
         }
         res.status(200).json({
             success: true,
-            document,
+            data: {
+                document,
+            },
         });
     }
     catch (error) {
@@ -501,8 +503,10 @@ expressApp.get('/documents/user/:uid', verifyToken, async (req, res) => {
         ];
         res.status(200).json({
             success: true,
-            count: documents.length,
-            documents,
+            data: {
+                count: documents.length,
+                documents,
+            },
         });
     }
     catch (error) {
@@ -539,8 +543,10 @@ expressApp.get('/documents/firm/:firmId', verifyToken, async (req, res) => {
         const documents = docs.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
         res.status(200).json({
             success: true,
-            count: documents.length,
-            documents,
+            data: {
+                count: documents.length,
+                documents,
+            },
         });
     }
     catch (error) {
@@ -574,8 +580,10 @@ expressApp.get('/documents/shared/:uid', verifyToken, async (req, res) => {
         const documents = docs.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
         res.status(200).json({
             success: true,
-            count: documents.length,
-            documents,
+            data: {
+                count: documents.length,
+                documents,
+            },
         });
     }
     catch (error) {
