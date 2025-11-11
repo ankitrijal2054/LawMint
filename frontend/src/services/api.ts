@@ -239,6 +239,150 @@ class ApiClient {
     const url = `${import.meta.env.VITE_AUTH_SERVICE_URL}/health`;
     return this.requestUnauthenticated(url, 'GET');
   }
+
+  // =========================================================================
+  // TEMPLATE ENDPOINTS
+  // =========================================================================
+
+  /**
+   * POST /templates/upload
+   * Upload a new template file (PDF/DOCX)
+   */
+  async uploadTemplate(payload: {
+    templateName: string;
+    fileName: string;
+    fileData: string; // base64 encoded file data
+  }): Promise<
+    ApiResponse<{
+      id: string;
+      name: string;
+      type: 'firm-specific';
+      content: string;
+      metadata: {
+        originalFileName: string;
+        fileType: 'pdf' | 'docx';
+        uploadedBy: string;
+        size: number;
+      };
+      createdAt: number;
+      updatedAt: number;
+    }>
+  > {
+    const url = `${import.meta.env.VITE_TEMPLATE_SERVICE_URL}/templates/upload`;
+    return this.request(url, 'POST', payload);
+  }
+
+  /**
+   * GET /templates/global
+   * Get all global templates (accessible to all authenticated users)
+   */
+  async getGlobalTemplates(): Promise<
+    ApiResponse<
+      Array<{
+        id: string;
+        name: string;
+        type: 'global';
+        content: string;
+        metadata: {
+          originalFileName: string;
+          fileType: 'pdf' | 'docx';
+          uploadedBy: string;
+          size: number;
+        };
+        createdAt: number;
+        updatedAt: number;
+      }>
+    >
+  > {
+    const url = `${import.meta.env.VITE_TEMPLATE_SERVICE_URL}/templates/global`;
+    return this.request(url, 'GET');
+  }
+
+  /**
+   * GET /templates/firm/:firmId
+   * Get all templates for a specific firm
+   */
+  async getFirmTemplates(firmId: string): Promise<
+    ApiResponse<
+      Array<{
+        id: string;
+        name: string;
+        type: 'firm-specific';
+        content: string;
+        metadata: {
+          originalFileName: string;
+          fileType: 'pdf' | 'docx';
+          uploadedBy: string;
+          size: number;
+        };
+        createdAt: number;
+        updatedAt: number;
+      }>
+    >
+  > {
+    const url = `${import.meta.env.VITE_TEMPLATE_SERVICE_URL}/templates/firm/${firmId}`;
+    return this.request(url, 'GET');
+  }
+
+  /**
+   * GET /templates/:templateId
+   * Get a single template by ID
+   */
+  async getTemplate(templateId: string): Promise<
+    ApiResponse<{
+      id: string;
+      name: string;
+      type: 'global' | 'firm-specific';
+      firmId?: string;
+      content: string;
+      metadata: {
+        originalFileName: string;
+        fileType: 'pdf' | 'docx';
+        uploadedBy: string;
+        size: number;
+      };
+      createdAt: number;
+      updatedAt: number;
+    }>
+  > {
+    const url = `${import.meta.env.VITE_TEMPLATE_SERVICE_URL}/templates/${templateId}`;
+    return this.request(url, 'GET');
+  }
+
+  /**
+   * DELETE /templates/:templateId
+   * Delete a firm template (Admin/Lawyer only)
+   */
+  async deleteTemplate(templateId: string): Promise<
+    ApiResponse<{
+      message: string;
+    }>
+  > {
+    const url = `${import.meta.env.VITE_TEMPLATE_SERVICE_URL}/templates/${templateId}`;
+    return this.request(url, 'DELETE');
+  }
+
+  /**
+   * GET /templates/:templateId/download
+   * Get a signed download URL for a template file
+   */
+  async downloadTemplate(
+    templateId: string,
+    firmId?: string
+  ): Promise<
+    ApiResponse<{
+      downloadUrl: string;
+      fileName: string;
+    }>
+  > {
+    const url = new URL(
+      `${import.meta.env.VITE_TEMPLATE_SERVICE_URL}/templates/${templateId}/download`
+    );
+    if (firmId) {
+      url.searchParams.append('firmId', firmId);
+    }
+    return this.request(url.toString(), 'GET');
+  }
 }
 
 // ============================================================================

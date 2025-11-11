@@ -4,11 +4,13 @@
  * Placeholder for Phase 2+ features
  */
 
+import { useNavigate } from 'react-router-dom';
 import { Navbar } from '@/components/Navbar';
 import { useAuth } from '@/contexts/AuthContext';
 import { FileText, Users, Plus, Settings } from 'lucide-react';
 
 export function Dashboard() {
+  const navigate = useNavigate();
   const { user } = useAuth();
 
   // This is a placeholder - Phase 2+ will add documents list, templates, etc.
@@ -42,7 +44,10 @@ export function Dashboard() {
           </div>
 
           {/* Browse Templates */}
-          <div className="bg-white rounded-xl shadow p-6 border border-slate-200 hover:shadow-lg transition-shadow cursor-pointer">
+          <div
+            onClick={() => navigate('/templates')}
+            className="bg-white rounded-xl shadow p-6 border border-slate-200 hover:shadow-lg transition-shadow cursor-pointer"
+          >
             <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center mb-4">
               <FileText className="w-6 h-6 text-amber-600" />
             </div>
