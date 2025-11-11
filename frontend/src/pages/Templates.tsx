@@ -4,7 +4,8 @@
  */
 
 import { useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   useGlobalTemplates,
   useFirmTemplates,
@@ -14,12 +15,13 @@ import {
 } from '@/hooks/useTemplates';
 import { TemplateCard } from '@/components/TemplateCard';
 import { UploadTemplateModal } from '@/components/UploadTemplateModal';
-import { Upload, Loader } from 'lucide-react';
+import { Upload, Loader, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 type TabType = 'global' | 'firm';
 
 export const Templates = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('global');
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -111,11 +113,20 @@ export const Templates = () => {
       <div className="bg-white border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Templates</h1>
-              <p className="text-gray-600 mt-2">
-                Manage your demand letter templates
-              </p>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Back to Dashboard"
+              >
+                <ArrowLeft size={24} />
+              </button>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Templates</h1>
+                <p className="text-gray-600 mt-2">
+                  Manage your demand letter templates
+                </p>
+              </div>
             </div>
             {canUploadTemplate && (
               <button

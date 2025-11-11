@@ -5,7 +5,7 @@
 
 import { Template } from '@/hooks/useTemplates';
 import { Download, Trash2, Eye } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { useState } from 'react';
 
 interface TemplateCardProps {

@@ -5,7 +5,7 @@
 
 import { useState } from 'react';
 import { useAllTemplates, Template } from '@/hooks/useTemplates';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { ChevronDown, Eye, X } from 'lucide-react';
 
 interface TemplateSelectorProps {

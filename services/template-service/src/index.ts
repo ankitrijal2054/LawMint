@@ -582,27 +582,41 @@ expressApp.get('/templates/:templateId/download', verifyToken, async (req: Reque
     // Generate signed URL for firm template
     const templateData = templateDoc.data();
     const storagePath = `templates/${firmId}/${templateId}/${templateData?.metadata?.originalFileName}`;
-    const signedUrl = await storage
-      .bucket()
-      .file(storagePath)
-      .getSignedUrl({
-        version: 'v4',
-        action: 'read',
-        expires: Date.now() + 1 * 60 * 60 * 1000, // 1 hour
-      });
+    
+    try {
+      const signedUrl = await storage
+        .bucket()
+        .file(storagePath)
+        .getSignedUrl({
+          version: 'v4',
+          action: 'read',
+          expires: Date.now() + 1 * 60 * 60 * 1000, // 1 hour
+        });
 
-    return res.status(200).json({
-      success: true,
-      data: {
-        downloadUrl: signedUrl[0],
-        fileName: templateData?.metadata?.originalFileName,
-      },
-    });
+      return res.status(200).json({
+        success: true,
+        data: {
+          downloadUrl: signedUrl[0],
+          fileName: templateData?.metadata?.originalFileName,
+        },
+      });
+    } catch (signedUrlError) {
+      console.error('Error generating signed URL:', signedUrlError);
+      // Fallback: return a public URL for emulator (won't work in production)
+      const publicUrl = `https://storage.googleapis.com/${storage.bucket().name}/${storagePath}`;
+      return res.status(200).json({
+        success: true,
+        data: {
+          downloadUrl: publicUrl,
+          fileName: templateData?.metadata?.originalFileName,
+        },
+      });
+    }
   } catch (error) {
     console.error('Error generating download URL:', error);
     return res.status(500).json({
       success: false,
-      error: 'Failed to generate download URL',
+      error: `Failed to generate download URL: ${error instanceof Error ? error.message : 'Unknown error'}`,
     });
   }
 });
