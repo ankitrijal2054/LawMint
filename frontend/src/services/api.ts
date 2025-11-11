@@ -581,6 +581,47 @@ class ApiClient {
     const url = `${import.meta.env.VITE_AI_SERVICE_URL}/ai/refine`;
     return this.request(url, 'POST', data);
   }
+
+  // ========================================================================
+  // EXPORT SERVICE
+  // ========================================================================
+
+  /**
+   * POST /export/docx
+   * Export document to DOCX format
+   * Returns binary DOCX file directly
+   */
+  async exportDocumentToDOCX(data: {
+    documentId: string;
+    content: string;
+    title?: string;
+  }): Promise<Blob> {
+    try {
+      const token = await this.getAuthToken();
+
+      const response = await fetch(
+        `${import.meta.env.VITE_EXPORT_SERVICE_URL}/export/docx`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(data),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Export failed: ${response.status}`);
+      }
+
+      return await response.blob();
+    } catch (error: any) {
+      console.error('Export error:', error);
+      throw error;
+    }
+  }
 }
 
 // ============================================================================

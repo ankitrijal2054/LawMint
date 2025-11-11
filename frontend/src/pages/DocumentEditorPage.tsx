@@ -15,6 +15,7 @@ import * as Y from 'yjs';
 import DocumentEditor from '@/components/DocumentEditor';
 import AIRefinementSidebar from '@/components/AIRefinementSidebar';
 import { ShareDocumentModal } from '@/components/ShareDocumentModal';
+import { ExportModal } from '@/components/ExportModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDocument, useUpdateDocument } from '@/hooks/useDocuments';
 import { useCollaboration } from '@/hooks/useCollaboration';
@@ -39,6 +40,7 @@ const DocumentEditorPage: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [ydoc] = useState(() => new Y.Doc());
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const titleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -143,26 +145,8 @@ const DocumentEditorPage: React.FC = () => {
   };
 
   // Handle export
-  const handleExport = async () => {
-    if (!documentId) {
-      toast.error('Document ID not found');
-      return;
-    }
-
-    toast.promise(
-      new Promise((resolve, reject) => {
-        setTimeout(() => {
-          // Call export API here
-          // For now, just mock the export
-          resolve({});
-        }, 2000);
-      }),
-      {
-        loading: 'Exporting to Word...',
-        success: 'Document exported successfully',
-        error: 'Failed to export document',
-      }
-    );
+  const handleExport = () => {
+    setIsExportModalOpen(true);
   };
 
   // Handle share
@@ -357,6 +341,17 @@ const DocumentEditorPage: React.FC = () => {
             // Optionally refresh document data here
             toast.success('Sharing settings updated');
           }}
+        />
+      )}
+
+      {/* Export Document Modal */}
+      {document && (
+        <ExportModal
+          isOpen={isExportModalOpen}
+          onClose={() => setIsExportModalOpen(false)}
+          documentId={documentId || ''}
+          content={content}
+          documentTitle={title}
         />
       )}
     </div>
