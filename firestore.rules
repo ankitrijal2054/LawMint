@@ -1,12 +1,134 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow read/write for all users during development
-    // In production, implement proper role-based access control
     
+    // ============================================================================
+    // HELPER FUNCTIONS
+    // ============================================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    function isSameFirm(firmId) {
+      return isAuthenticated() && getUserData().firmId == firmId;
+    }
+    
+    function isAdminOrLawyer() {
+      return isAuthenticated() && getUserData().role in ["admin", "lawyer"];
+    }
+    
+    function isParalegal() {
+      return isAuthenticated() && getUserData().role == "paralegal";
+    }
+    
+    function hasRoleInFirm(firmId, requiredRoles) {
+      return isAuthenticated() && 
+             isSameFirm(firmId) && 
+             getUserData().role in requiredRoles;
+    }
+    
+    // ============================================================================
+    // USERS COLLECTION
+    // Users can only read/write their own profile
+    // ============================================================================
+    match /users/{uid} {
+      allow read: if isAuthenticated() && request.auth.uid == uid;
+      allow write: if isAuthenticated() && request.auth.uid == uid;
+    }
+    
+    // ============================================================================
+    // FIRMS COLLECTION
+    // Read: Users in the firm can read firm data
+    // Create: Any authenticated user can create a firm
+    // Update: Only admins and lawyers in the firm
+    // Delete: Only firm creator (admin)
+    // ============================================================================
+    match /firms/{firmId} {
+      allow read: if isSameFirm(firmId);
+      allow create: if isAuthenticated();
+      allow update: if isSameFirm(firmId) && isAdminOrLawyer();
+      allow delete: if isSameFirm(firmId) && isAdminOrLawyer();
+      
+      // Subcollection: members (if needed)
+      match /members/{memberId} {
+        allow read: if isSameFirm(firmId);
+        allow write: if isSameFirm(firmId) && isAdminOrLawyer();
+      }
+    }
+    
+    // ============================================================================
+    // GLOBAL TEMPLATES COLLECTION
+    // Read: All authenticated users can read global templates
+    // Write: Disabled - only system can write (via admin SDK)
+    // ============================================================================
+    match /templates/global/{templateId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only system/admin SDK writes
+    }
+    
+    // ============================================================================
+    // FIRM TEMPLATES COLLECTION
+    // Read: Users in the firm can read firm templates
+    // Create/Update: Only admins and lawyers in the firm
+    // Delete: Only admins and lawyers in the firm
+    // ============================================================================
+    match /templates/{firmId}/{templateId} {
+      allow read: if isSameFirm(firmId);
+      allow create: if isSameFirm(firmId) && isAdminOrLawyer();
+      allow update: if isSameFirm(firmId) && isAdminOrLawyer();
+      allow delete: if isSameFirm(firmId) && isAdminOrLawyer();
+    }
+    
+    // ============================================================================
+    // DOCUMENTS COLLECTION
+    // Complex permissions based on ownership and visibility:
+    // - Private: Only owner
+    // - Shared: Owner + explicitly shared users
+    // - Firm-wide: All firm members
+    // ============================================================================
+    match /documents/{documentId} {
+      // READ permission
+      allow read: if isAuthenticated() && (
+        // Owner can always read
+        resource.data.ownerId == request.auth.uid ||
+        // Firm-wide: any firm member can read
+        (resource.data.visibility == "firm-wide" && isSameFirm(resource.data.firmId)) ||
+        // Shared: user is in sharedWith list
+        (resource.data.visibility == "shared" && request.auth.uid in resource.data.sharedWith)
+      );
+      
+      // CREATE permission - Only admins and lawyers can create documents
+      allow create: if isAuthenticated() && 
+                       isSameFirm(request.resource.data.firmId) && 
+                       isAdminOrLawyer();
+      
+      // UPDATE permission
+      allow update: if isAuthenticated() && (
+        // Owner (must be admin/lawyer) can update
+        (resource.data.ownerId == request.auth.uid && isAdminOrLawyer()) ||
+        // Paralegal can edit shared/firm-wide documents
+        (isParalegal() && (
+          (resource.data.visibility == "firm-wide" && isSameFirm(resource.data.firmId)) ||
+          (resource.data.visibility == "shared" && request.auth.uid in resource.data.sharedWith)
+        ))
+      );
+      
+      // DELETE permission - Only document owner (admin/lawyer) can delete
+      allow delete: if isAuthenticated() && 
+                       resource.data.ownerId == request.auth.uid && 
+                       isAdminOrLawyer();
+    }
+    
+    // ============================================================================
+    // CATCH-ALL: Deny everything else
+    // ============================================================================
     match /{document=**} {
-      allow read, write: if request.auth != null;
+      allow read, write: if false;
     }
   }
 }
-

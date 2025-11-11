@@ -1,12 +1,83 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    // Allow authenticated users to read and write during development
-    // In production, implement proper permission checks
     
+    // ============================================================================
+    // HELPER FUNCTIONS
+    // ============================================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function getUserFirmId() {
+      return firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.firmId;
+    }
+    
+    function isUserInFirm(firmId) {
+      return isAuthenticated() && getUserFirmId() == firmId;
+    }
+    
+    function getUserRole() {
+      return firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role;
+    }
+    
+    function isAdminOrLawyer() {
+      return getUserRole() in ["admin", "lawyer"];
+    }
+    
+    // ============================================================================
+    // GLOBAL TEMPLATES STORAGE
+    // Path: /templates/global/{fileName}
+    // Read: All authenticated users
+    // Write: Disabled - only system can write
+    // ============================================================================
+    match /templates/global/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only admin SDK writes
+    }
+    
+    // ============================================================================
+    // FIRM TEMPLATES STORAGE
+    // Path: /templates/{firmId}/{fileName}
+    // Read: Users in the firm
+    // Write: Users in the firm (for upload/delete)
+    // ============================================================================
+    match /templates/{firmId}/{fileName} {
+      allow read: if isAuthenticated() && isUserInFirm(firmId);
+      allow write: if isAuthenticated() && isUserInFirm(firmId) && isAdminOrLawyer();
+      allow delete: if isAuthenticated() && isUserInFirm(firmId) && isAdminOrLawyer();
+    }
+    
+    // ============================================================================
+    // SOURCE DOCUMENTS STORAGE
+    // Path: /sources/{firmId}/{documentId}/{fileName}
+    // Read: Users in the firm who have access to the document
+    // Write: Users in the firm who created/own the document
+    // ============================================================================
+    match /sources/{firmId}/{documentId}/{fileName} {
+      allow read: if isAuthenticated() && isUserInFirm(firmId);
+      allow write: if isAuthenticated() && isUserInFirm(firmId) && isAdminOrLawyer();
+      allow delete: if isAuthenticated() && isUserInFirm(firmId) && isAdminOrLawyer();
+    }
+    
+    // ============================================================================
+    // EXPORTED DOCUMENTS STORAGE
+    // Path: /exports/{firmId}/{documentId}/{fileName}
+    // Read: Users in the firm who have access to the document
+    // Write: System/service writes exports
+    // ============================================================================
+    match /exports/{firmId}/{documentId}/{fileName} {
+      allow read: if isAuthenticated() && isUserInFirm(firmId);
+      allow write: if isAuthenticated() && isUserInFirm(firmId) && isAdminOrLawyer();
+      allow delete: if isAuthenticated() && isUserInFirm(firmId) && isAdminOrLawyer();
+    }
+    
+    // ============================================================================
+    // CATCH-ALL: Deny all other paths
+    // ============================================================================
     match /{allPaths=**} {
-      allow read, write: if request.auth != null;
+      allow read, write: if false;
     }
   }
 }
-

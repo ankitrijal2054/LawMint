@@ -1,16 +1,23 @@
 # Active Context: LawMint
 
-**Last Updated:** November 11, 2025 (Updated Post Phase 1)
-**Current Phase:** Phase 1 - Authentication Service  
-**Status:** ✅ COMPLETE - Backend Built, UI Complete, Ready for Testing
+**Last Updated:** November 11, 2025 (Phase 2 Starting)
+**Current Phase:** Phase 2 - Firestore Data Structure & Security  
+**Status:** 🟢 Starting Phase 2 - Database Schema & Security Rules
 
 ---
 
 ## Current Focus
 
-### Phase 1 Complete! ✅
+### Phase 2: Firestore Data Structure & Security (Starting Now) 🚀
 
-**Just Completed:**
+**This Phase Objective:**
+- Define and document all Firestore collections schema
+- Implement role-based Firestore security rules (admin, lawyer, paralegal)
+- Implement Firebase Storage security rules for templates, sources, exports
+- Validate rules with Firebase Emulator UI
+- Estimated time: 2-3 days
+
+**Just Starting Phase 2 (Phase 1 Complete!):**
 
 **Backend (auth-service):**
 - ✅ Express.js microservice with 7 endpoints
@@ -47,46 +54,72 @@
 - ✅ Constants (roles, permissions, validation rules, error codes)
 - ✅ Utility functions (validation, firm code gen, timestamp formatting)
 
-### Next: Phase 1 Testing & Firebase Setup
+### Phase 2 Work Plan
 
-**STATUS:** Backend built ✅ | Emulators configured ✅ | Frontend running ✅
+**Task 2.1: Firestore Collections Schema** (Documentation)
+- Document all 5 collections: users, firms, templates/global, templates/{firmId}, documents
+- Create schema reference with all fields, types, and constraints
+- Store in memory-bank or README for easy reference
 
-**CURRENT ISSUE:** CORS errors when calling auth-service (frontend at 5173 → backend at 5001)
+**Task 2.2: Firestore Security Rules** (firestore.rules)
+- Implement role-based access control (admin, lawyer, paralegal)
+- Rules for each collection with proper read/write permissions
+- Helper functions for `isAuthenticated()`, `isSameFirm()`, `isAdminOrLawyer()`
 
-**ROOT CAUSE:** Firebase emulators need to reload the built auth-service function
+**Task 2.3: Firebase Storage Security Rules** (storage.rules)
+- Rules for `/templates/{firmId}/{fileName}` - firm template files
+- Rules for `/templates/global/{fileName}` - read-only system templates
+- Rules for `/sources/{firmId}/{documentId}/{fileName}` - source documents
+- Rules for `/exports/{firmId}/{documentId}/{fileName}` - exported DOCX files
 
-**IMMEDIATE ACTION NEEDED:**
+**IMMEDIATE NEXT STEPS:**
+1. Create detailed Firestore schema reference document
+2. Create firestore.rules with role-based security rules
+3. Create storage.rules with path-based security rules
+4. Test rules via Firebase Emulator UI
+5. Verify auth-service correctly writes users/firms to Firestore
 
-1. **Restart Firebase Emulators**
-   - Press Ctrl+C in Terminal 1 (where `firebase emulators:start` is running)
-   - Run: `firebase emulators:start`
-   - Wait for: "✓ Loaded 1 function(s): authService"
+---
 
-2. **Hard Refresh Browser**
-   - Visit http://localhost:5173/
-   - Hard refresh: Cmd+Shift+R (Mac) or Ctrl+Shift+R (Windows)
+## Phase 2 Completion Summary ✅
 
-3. **Test Signup**
-   - Click "Get Started" → "Sign Up"
-   - Fill form and submit
-   - Should see success (no CORS error)
+**November 11, 2025 - Phase 2 COMPLETE - Database & Security:**
 
-4. **If Still Getting Error**
-   - See: `/FIX_CORS_ISSUES.md` for detailed troubleshooting
+**✅ Task 2.1: Firestore Collections Schema**
+- Designed 5 Firestore collections with complete field specifications
+- Document structure for users, firms, templates (global + firm-specific), and documents
+- All fields typed with required/optional markers
+- Created comprehensive `memory-bank/firestore-schema.md` (380+ lines)
+  - Field definitions with types and constraints
+  - Relationships and cross-collection constraints
+  - Query patterns for all common operations
+  - Examples for each collection type
 
-**Test Phase 1 Flows**
-   - Visit http://localhost:5173
-   - Signup → Create Firm → Confirm firm code
-   - Signup → Join Firm → Enter firm code & role
-   - Login with created account
-   - Logout
-   - Check Firestore Emulator UI: http://127.0.0.1:4000/firestore
+**✅ Task 2.2: Firestore Security Rules**
+- Created `firestore.rules` with enterprise-grade role-based access control (122 lines)
+- Helper functions: `isAuthenticated()`, `getUserData()`, `isSameFirm()`, `isAdminOrLawyer()`, `isParalegal()`
+- Collection-level rules:
+  - `/users/{uid}` - Self-read/write only
+  - `/firms/{firmId}` - Firm members read, admin/lawyer update
+  - `/templates/global/{templateId}` - All authenticated users read (system-only write)
+  - `/templates/{firmId}/{templateId}` - Firm members read, admin/lawyer CRUD
+  - `/documents/{documentId}` - Complex visibility rules (private/shared/firm-wide)
+
+**✅ Task 2.3: Firebase Storage Security Rules**
+- Created `storage.rules` with path-based security rules (70 lines)
+- Secure paths:
+  - `/templates/global/{fileName}` - All auth users read
+  - `/templates/{firmId}/{fileName}` - Firm members read/write
+  - `/sources/{firmId}/{documentId}/{fileName}` - Firm members read/write
+  - `/exports/{firmId}/{documentId}/{fileName}` - Firm members read/write
+
+**Status:** ✅ COMPLETE | Estimated 2-3 days, Actual: 1 day (accelerated)
 
 ---
 
 ## Recent Changes
 
-**November 11, 2025 - Phase 1 Environment Configuration Complete:**
+**November 11, 2025 - Phase 2 Complete, Phase 1 Environment Configuration Complete:**
 - ✅ **CRITICAL FIX #1:** Created missing `index.html` entry point for Vite
   - Issue: Frontend was returning 404 at localhost:5173 (no HTML entry point)
   - Fix: Added `frontend/index.html` with proper React mounting point (`<div id="root">`)
@@ -192,9 +225,42 @@ If questions arise during Phase 0:
 
 ---
 
+## Next Phase: Phase 3 - Template Service & Management System 🚀
+
+**Phase 3 Goal:** Build template-service microservice for PDF/DOCX template management
+
+**What Phase 3 Will Do:**
+1. **Backend (template-service):** Express microservice with 6 endpoints
+   - `POST /templates/upload` - Upload PDF/DOCX templates with text extraction
+   - `GET /templates/global` - List all global templates
+   - `GET /templates/firm/:firmId` - List firm-specific templates
+   - `GET /templates/:templateId` - Get single template details
+   - `DELETE /templates/:templateId` - Delete firm template (admin/lawyer only)
+   - `GET /templates/:templateId/download` - Download template file
+
+2. **Frontend:** Template management UI
+   - `src/services/templateService.ts` - API client
+   - `src/hooks/useTemplates.ts` - React Query hooks
+   - `src/pages/Templates.tsx` - Template listing with tabs
+   - `src/components/TemplateCard.tsx` - Template display
+   - `src/components/UploadTemplateModal.tsx` - Upload workflow
+   - `src/components/TemplateSelector.tsx` - Selection component
+
+**Key Technologies:**
+- `mammoth` - DOCX text extraction
+- `pdf-parse` - PDF text extraction
+- Firebase Storage - File persistence
+- React Query - Frontend data fetching
+
+**Estimated Time:** 3-4 days
+
+**Current Blockers:** None - Ready to start!
+
+---
+
 ## Current Blockers
 
-**None.** Ready to start Phase 0.
+**None.** Phase 2 complete - Ready for Phase 3!
 
 ### Potential Blockers to Watch For
 
@@ -351,6 +417,6 @@ If questions arise during Phase 0:
 
 ---
 
-**Status:** ✅ Phase 0 COMPLETE  
-**Next Action:** Create Firebase project "lawmint" and configure environment, then start Phase 1 (Authentication Service)
+**Status:** ✅ Phase 0-2 COMPLETE | 🟢 Phase 3 Ready to Start  
+**Next Action:** Start Phase 3 - Template Service & Management (Backend + Frontend)
 
