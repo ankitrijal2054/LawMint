@@ -1,0 +1,257 @@
+/**
+ * React Query hooks for document operations
+ * Handles CRUD, listing, sharing, and source uploads
+ */
+
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
+import { apiClient } from '@/services/api';
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+export interface Document {
+  id: string;
+  documentId: string;
+  firmId: string;
+  ownerId: string;
+  title: string;
+  content: string;
+  templateId?: string;
+  sourceDocuments: unknown[];
+  visibility: 'private' | 'shared' | 'firm-wide';
+  sharedWith: string[];
+  activeUsers: unknown[];
+  status: 'draft' | 'final' | 'approved';
+  metadata: {
+    lastEditedBy: string;
+    wordCount: number;
+    version: number;
+    notes: string;
+  };
+  createdAt: unknown;
+  updatedAt: unknown;
+}
+
+export interface SourceDocument {
+  fileName: string;
+  fileType: 'pdf' | 'docx';
+  storagePath: string;
+  extractedText: string;
+  uploadedAt: unknown;
+  uploadedBy: string;
+}
+
+// ============================================================================
+// QUERIES
+// ============================================================================
+
+/**
+ * Get a single document by ID
+ */
+export function useDocument(documentId: string | null) {
+  return useQuery({
+    queryKey: ['document', documentId],
+    queryFn: async () => {
+      if (!documentId) return null;
+      const response = await apiClient.getDocument(documentId);
+      if (!response.success) throw new Error(response.error);
+      return response.data?.document as Document;
+    },
+    enabled: !!documentId,
+    staleTime: 30000, // 30 seconds
+    retry: 2,
+  });
+}
+
+/**
+ * Get user's documents (owned + shared + firm-wide)
+ */
+export function useUserDocuments(uid: string | null) {
+  return useQuery({
+    queryKey: ['documents', 'user', uid],
+    queryFn: async () => {
+      if (!uid) return [];
+      const response = await apiClient.getUserDocuments(uid);
+      if (!response.success) throw new Error(response.error);
+      return response.data?.documents as Document[];
+    },
+    enabled: !!uid,
+    staleTime: 60000, // 1 minute
+    retry: 2,
+  });
+}
+
+/**
+ * Get firm-wide documents
+ */
+export function useFirmDocuments(firmId: string | null) {
+  return useQuery({
+    queryKey: ['documents', 'firm', firmId],
+    queryFn: async () => {
+      if (!firmId) return [];
+      const response = await apiClient.getFirmDocuments(firmId);
+      if (!response.success) throw new Error(response.error);
+      return response.data?.documents as Document[];
+    },
+    enabled: !!firmId,
+    staleTime: 60000, // 1 minute
+    retry: 2,
+  });
+}
+
+/**
+ * Get documents shared with user
+ */
+export function useSharedDocuments(uid: string | null) {
+  return useQuery({
+    queryKey: ['documents', 'shared', uid],
+    queryFn: async () => {
+      if (!uid) return [];
+      const response = await apiClient.getSharedDocuments(uid);
+      if (!response.success) throw new Error(response.error);
+      return response.data?.documents as Document[];
+    },
+    enabled: !!uid,
+    staleTime: 60000, // 1 minute
+    retry: 2,
+  });
+}
+
+// ============================================================================
+// MUTATIONS
+// ============================================================================
+
+/**
+ * Create a new document
+ */
+export function useCreateDocument() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: {
+      title: string;
+      firmId: string;
+      templateId?: string;
+      sourceDocuments?: unknown[];
+      visibility?: 'private' | 'shared' | 'firm-wide';
+      content?: string;
+    }) => {
+      const response = await apiClient.createDocument(data);
+      if (!response.success) throw new Error(response.error);
+      return response.data?.documentId;
+    },
+    onSuccess: () => {
+      toast.success('Document created successfully');
+      // Invalidate document queries
+      queryClient.invalidateQueries({ queryKey: ['documents'] });
+    },
+    onError: (error) => {
+      toast.error((error as Error).message || 'Failed to create document');
+    },
+  });
+}
+
+/**
+ * Update document content
+ */
+export function useUpdateDocument(documentId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: {
+      content?: string;
+      status?: 'draft' | 'final' | 'approved';
+    }) => {
+      const response = await apiClient.updateDocument(documentId, data);
+      if (!response.success) throw new Error(response.error);
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.success('Document updated');
+      // Invalidate specific document query
+      queryClient.invalidateQueries({ queryKey: ['document', documentId] });
+      queryClient.invalidateQueries({ queryKey: ['documents'] });
+    },
+    onError: (error) => {
+      toast.error((error as Error).message || 'Failed to update document');
+    },
+  });
+}
+
+/**
+ * Delete a document
+ */
+export function useDeleteDocument() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (documentId: string) => {
+      const response = await apiClient.deleteDocument(documentId);
+      if (!response.success) throw new Error(response.error);
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.success('Document deleted');
+      // Invalidate document queries
+      queryClient.invalidateQueries({ queryKey: ['documents'] });
+    },
+    onError: (error) => {
+      toast.error((error as Error).message || 'Failed to delete document');
+    },
+  });
+}
+
+/**
+ * Share document with users
+ */
+export function useShareDocument(documentId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: {
+      visibility: 'private' | 'shared' | 'firm-wide';
+      sharedWith?: string[];
+    }) => {
+      const response = await apiClient.shareDocument(documentId, data);
+      if (!response.success) throw new Error(response.error);
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.success('Document sharing updated');
+      // Invalidate document queries
+      queryClient.invalidateQueries({ queryKey: ['document', documentId] });
+      queryClient.invalidateQueries({ queryKey: ['documents'] });
+    },
+    onError: (error) => {
+      toast.error((error as Error).message || 'Failed to update sharing');
+    },
+  });
+}
+
+/**
+ * Upload source documents for extraction
+ */
+export function useUploadSources() {
+  return useMutation({
+    mutationFn: async (data: {
+      documentId?: string;
+      files: {
+        filename: string;
+        data: string; // base64
+      }[];
+    }) => {
+      const response = await apiClient.uploadSources(data);
+      if (!response.success) throw new Error(response.error);
+      return {
+        extractedTexts: response.data?.extractedTexts || [],
+        sourceDocuments: response.data?.sourceDocuments || [],
+      };
+    },
+    onError: (error) => {
+      toast.error((error as Error).message || 'Failed to upload sources');
+    },
+  });
+}
+

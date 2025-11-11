@@ -35,7 +35,10 @@ export function Dashboard() {
         {/* Quick Actions Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           {/* New Document */}
-          <div className="bg-white rounded-xl shadow p-6 border border-slate-200 hover:shadow-lg transition-shadow cursor-pointer">
+          <div
+            onClick={() => navigate('/documents/new')}
+            className="bg-white rounded-xl shadow p-6 border border-slate-200 hover:shadow-lg transition-shadow cursor-pointer"
+          >
             <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
               <Plus className="w-6 h-6 text-blue-600" />
             </div>

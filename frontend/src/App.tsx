@@ -14,6 +14,7 @@ import { Login } from '@/pages/Login';
 import { Signup } from '@/pages/Signup';
 import { Dashboard } from '@/pages/Dashboard';
 import { Templates } from '@/pages/Templates';
+import { NewDocument } from '@/pages/NewDocument';
 
 // Components
 import { CreateFirmForm } from '@/components/CreateFirmForm';
@@ -50,6 +51,14 @@ export function App() {
             element={
               <ProtectedRoute>
                 <Templates />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/documents/new"
+            element={
+              <ProtectedRoute>
+                <NewDocument />
               </ProtectedRoute>
             }
           />
