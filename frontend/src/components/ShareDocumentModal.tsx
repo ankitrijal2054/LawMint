@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { X, Loader, AlertCircle, CheckCircle } from 'lucide-react';
 import { useFirmMembers } from '../hooks/useFirmMembers';
-import { useShareDocument } from '../hooks/useDocuments';
+import { useShareDocument, useDocument } from '../hooks/useDocuments';
+import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
 
 interface ShareDocumentModalProps {
@@ -27,8 +28,14 @@ export const ShareDocumentModal: React.FC<ShareDocumentModalProps> = ({
   const [selectedMembers, setSelectedMembers] = useState<string[]>(currentSharedWith);
   const [showMembersList, setShowMembersList] = useState(false);
 
+  const { user } = useAuth();
+  const { data: document } = useDocument(documentId);
   const { data: firmMembers = [], isLoading: membersLoading } = useFirmMembers();
   const shareDocMutation = useShareDocument(documentId);
+
+  // Only owner can share documents
+  const isOwner = document?.ownerId === user?.uid;
+  const isDisabled = !isOwner || shareDocMutation.isPending;
 
   // Reset form when modal opens
   useEffect(() => {
@@ -86,15 +93,27 @@ export const ShareDocumentModal: React.FC<ShareDocumentModalProps> = ({
 
         {/* Content */}
         <div className="p-6 space-y-4">
+          {/* Ownership Warning */}
+          {!isOwner && (
+            <div className="flex items-start space-x-2 p-3 bg-blue-50 border border-blue-200 rounded">
+              <AlertCircle size={20} className="text-blue-500 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-blue-800">
+                Only the document owner can change sharing settings. You can view and edit this document.
+              </p>
+            </div>
+          )}
+
           {/* Private Option */}
-          <label className="flex items-start space-x-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition">
+          <label className={`flex items-start space-x-3 p-3 border border-gray-200 rounded-lg ${
+            isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-50'
+          } transition`}>
             <input
               type="radio"
               name="visibility"
               value="private"
               checked={visibility === 'private'}
               onChange={(e) => handleVisibilityChange(e.target.value as 'private')}
-              disabled={shareDocMutation.isPending}
+              disabled={isDisabled}
               className="mt-1 w-4 h-4"
             />
             <div>
@@ -104,14 +123,16 @@ export const ShareDocumentModal: React.FC<ShareDocumentModalProps> = ({
           </label>
 
           {/* Shared with Specific Users Option */}
-          <label className="flex items-start space-x-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition">
+          <label className={`flex items-start space-x-3 p-3 border border-gray-200 rounded-lg ${
+            isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-50'
+          } transition`}>
             <input
               type="radio"
               name="visibility"
               value="shared"
               checked={visibility === 'shared'}
               onChange={(e) => handleVisibilityChange(e.target.value as 'shared')}
-              disabled={shareDocMutation.isPending}
+              disabled={isDisabled}
               className="mt-1 w-4 h-4"
             />
             <div className="flex-1">
@@ -213,14 +234,16 @@ export const ShareDocumentModal: React.FC<ShareDocumentModalProps> = ({
           </label>
 
           {/* Firm-Wide Option */}
-          <label className="flex items-start space-x-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition">
+          <label className={`flex items-start space-x-3 p-3 border border-gray-200 rounded-lg ${
+            isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-50'
+          } transition`}>
             <input
               type="radio"
               name="visibility"
               value="firm-wide"
               checked={visibility === 'firm-wide'}
               onChange={(e) => handleVisibilityChange(e.target.value as 'firm-wide')}
-              disabled={shareDocMutation.isPending}
+              disabled={isDisabled}
               className="mt-1 w-4 h-4"
             />
             <div>

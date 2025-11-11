@@ -31,6 +31,28 @@ export const NewDocument: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  // Check if user has permission to create documents (paralegals cannot)
+  if (user?.role === 'paralegal') {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-50">
+        <div className="text-center bg-white p-8 rounded-lg shadow">
+          <p className="text-gray-600 mb-4 text-lg">
+            Paralegals can only edit shared documents.
+          </p>
+          <p className="text-gray-500 mb-6">
+            Contact your firm administrator if you need to create new documents.
+          </p>
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="px-4 py-2 bg-[#1E2A78] text-white rounded-lg hover:bg-[#2A2F65] transition"
+          >
+            Go to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // State
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [stepData, setStepData] = useState<StepData>({

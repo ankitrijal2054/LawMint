@@ -41,6 +41,7 @@ const DocumentEditorPage: React.FC = () => {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [ydoc] = useState(() => new Y.Doc());
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const titleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Data hooks
   const { data: document, isLoading } = useDocument(documentId || '');
@@ -58,9 +59,38 @@ const DocumentEditorPage: React.FC = () => {
     }
   }, [document]);
 
-  // Handle title change
+  // Handle title change with debounced auto-save
   const handleTitleChange = (newTitle: string) => {
     setTitle(newTitle);
+
+    // Debounce title save
+    if (titleTimeoutRef.current) {
+      clearTimeout(titleTimeoutRef.current);
+    }
+
+    titleTimeoutRef.current = setTimeout(() => {
+      if (documentId && user && newTitle.trim()) {
+        setIsSaving(true);
+        const now = new Date();
+
+        updateDocument(
+          {
+            title: newTitle.trim(),
+          },
+          {
+            onSuccess: () => {
+              setLastSaved(now);
+              setIsSaving(false);
+              toast.success('Title saved');
+            },
+            onError: (error: any) => {
+              setIsSaving(false);
+              console.error('Save error:', error);
+            },
+          }
+        );
+      }
+    }, 2000); // Save after 2 seconds of inactivity
   };
 
   // Handle content change
@@ -145,12 +175,19 @@ const DocumentEditorPage: React.FC = () => {
     navigate('/dashboard');
   };
 
-  // Permission checks
+  // Permission checks - allow editing for owner and shared users
   const canEdit =
     !document ||
-    document.ownerId === user?.uid ||
-    (document.visibility === 'firm-wide' && document.firmId === user?.uid) ||
-    (document.visibility === 'shared' && document.sharedWith?.includes(user?.uid || ''));
+    document.ownerId === user?.uid || // Owner can always edit
+    (document.visibility === 'firm-wide') || // Anyone in firm-wide can edit
+    (document.visibility === 'shared' && document.sharedWith?.includes(user?.uid || '')); // Shared members can edit
+
+  // Owner is the document creator
+  const isOwner = document?.ownerId === user?.uid;
+
+  // Only admins and lawyers can share/export
+  const canShare = isOwner;
+  const canExport = isOwner;
 
   if (isLoading) {
     return (
@@ -246,22 +283,26 @@ const DocumentEditorPage: React.FC = () => {
               <Save size={20} className="text-gray-600" />
             </button>
 
+            {canShare && (
             <button
               onClick={handleShare}
               className="p-2 hover:bg-gray-100 rounded-lg transition"
-              title="Share"
+                title="Share (Owner only)"
             >
               <Share2 size={20} className="text-gray-600" />
             </button>
+            )}
 
+            {canExport && (
             <button
               onClick={handleExport}
               className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg transition flex items-center gap-2"
-              title="Export to Word"
+                title="Export to Word (Owner only)"
             >
               <Download size={18} />
               Export
             </button>
+            )}
 
             {/* More menu */}
             <button className="p-2 hover:bg-gray-100 rounded-lg transition">
