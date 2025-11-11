@@ -16,12 +16,6 @@
     "@tanstack/react-query": "^5.28.0",
     "react-hot-toast": "^2.4.1",
     "firebase": "^10.7.0",
-    "@tiptap/react": "^2.1.0",
-    "@tiptap/starter-kit": "^2.1.0",
-    "@tiptap/extension-collaboration": "^2.1.0",
-    "@tiptap/extension-collaboration-cursor": "^2.1.0",
-    "yjs": "^13.6.0",
-    "y-firebase": "^1.0.0",
     "lucide-react": "^0.294.0"
   },
   "devDependencies": {

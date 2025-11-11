@@ -1,0 +1,282 @@
+/**
+ * Global Styles
+ * Tailwind CSS base configuration and custom styles
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ========================================================================== */
+/* ROOT & TYPOGRAPHY */
+/* ========================================================================== */
+
+:root {
+  --color-primary: #1e2a78;
+  --color-secondary: #f4f1e9;
+  --color-accent: #c59e47;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  @apply antialiased;
+}
+
+* {
+  @apply box-border;
+}
+
+/* Font families */
+.font-playfair {
+  font-family: 'Playfair Display', serif;
+}
+
+.font-inter {
+  font-family: 'Inter', sans-serif;
+}
+
+/* ========================================================================== */
+/* CUSTOM COMPONENTS */
+/* ========================================================================== */
+
+/* Buttons */
+@layer components {
+  .btn-primary {
+    @apply px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all;
+  }
+
+  .btn-secondary {
+    @apply px-6 py-3 bg-slate-200 hover:bg-slate-300 text-slate-900 font-semibold rounded-lg transition-all;
+  }
+
+  .btn-accent {
+    @apply px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-lg transition-all;
+  }
+
+  .btn-ghost {
+    @apply px-6 py-3 text-slate-700 hover:bg-slate-100 font-semibold rounded-lg transition-all;
+  }
+
+  .btn-danger {
+    @apply px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-all;
+  }
+
+  /* Input fields */
+  .input-field {
+    @apply px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all;
+  }
+
+  /* Cards */
+  .card {
+    @apply bg-white rounded-xl shadow border border-slate-200 p-6 transition-shadow;
+  }
+
+  .card-hover {
+    @apply card hover:shadow-lg;
+  }
+
+  /* Badges */
+  .badge {
+    @apply inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold;
+  }
+
+  .badge-primary {
+    @apply badge bg-blue-100 text-blue-800;
+  }
+
+  .badge-success {
+    @apply badge bg-green-100 text-green-800;
+  }
+
+  .badge-warning {
+    @apply badge bg-amber-100 text-amber-800;
+  }
+
+  .badge-danger {
+    @apply badge bg-red-100 text-red-800;
+  }
+
+  /* Sections */
+  .section-header {
+    @apply text-3xl font-bold text-slate-900 font-playfair;
+  }
+
+  .section-subtext {
+    @apply text-lg text-slate-600;
+  }
+}
+
+/* ========================================================================== */
+/* ANIMATIONS */
+/* ========================================================================== */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-in;
+}
+
+.animate-slideInUp {
+  animation: slideInUp 0.5s ease-out;
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ========================================================================== */
+/* UTILITY CLASSES */
+/* ========================================================================== */
+
+/* Gradients */
+.gradient-primary {
+  background: linear-gradient(135deg, #1e2a78 0%, #2a2f65 100%);
+}
+
+.gradient-accent {
+  background: linear-gradient(135deg, #c59e47 0%, #e0c878 100%);
+}
+
+/* Text truncation */
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+}
+
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.line-clamp-3 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+/* Loading skeleton */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* ========================================================================== */
+/* RESPONSIVE OVERRIDES */
+/* ========================================================================== */
+
+@media (max-width: 640px) {
+  .btn-primary,
+  .btn-secondary,
+  .btn-accent,
+  .btn-ghost {
+    @apply px-4 py-2 text-sm;
+  }
+
+  .section-header {
+    @apply text-2xl;
+  }
+}
+
+/* ========================================================================== */
+/* SCROLLBAR STYLING */
+/* ========================================================================== */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* ========================================================================== */
+/* FORM STYLING */
+/* ========================================================================== */
+
+input:disabled,
+textarea:disabled,
+select:disabled {
+  @apply bg-slate-100 cursor-not-allowed;
+}
+
+input::placeholder {
+  @apply text-slate-400;
+}
+
+textarea::placeholder {
+  @apply text-slate-400;
+}
+
+/* ========================================================================== */
+/* PRINT STYLES */
+/* ========================================================================== */
+
+@media print {
+  body {
+    @apply bg-white;
+  }
+
+  .no-print {
+    @apply hidden;
+  }
+}
+

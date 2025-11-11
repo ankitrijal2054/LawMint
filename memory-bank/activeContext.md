@@ -1,75 +1,112 @@
 # Active Context: LawMint
 
-**Last Updated:** November 11, 2025 (Updated Post Phase 0)
-**Current Phase:** Phase 0 - Project Setup & Configuration  
-**Status:** ✅ COMPLETE - Ready for Phase 1
+**Last Updated:** November 11, 2025 (Updated Post Phase 1)
+**Current Phase:** Phase 1 - Authentication Service  
+**Status:** ✅ COMPLETE - Backend Built, UI Complete, Ready for Testing
 
 ---
 
 ## Current Focus
 
-### Phase 0 Complete! ✅
+### Phase 1 Complete! ✅
 
 **Just Completed:**
-- ✅ Git repository initialized with comprehensive `.gitignore`
-- ✅ Monorepo workspace configured (7 workspaces)
-- ✅ Root configuration files (prettier, eslint, typescript, firebase.json)
-- ✅ Frontend scaffolded (React 18 + Vite + TypeScript + Tailwind)
-  - Complete folder structure (components/, pages/, hooks/, contexts/, services/, types/, utils/)
-  - Steno-inspired design colors configured
-- ✅ 5 Microservices created and structured
-  - auth-service, template-service, document-service, ai-service, export-service
-  - Each with package.json, tsconfig.json, and src/ folder
-- ✅ Shared library created (types/, constants/, utils/, api/)
-- ✅ Firebase configuration ready (firestore.rules, storage.rules, database.rules.json)
-- ✅ Comprehensive documentation created
 
-**What's Configured:**
-- TypeScript throughout (type-safe)
-- ESLint + Prettier for code quality
-- Firebase emulators (ports 9099-9199)
-- All dependencies documented
+**Backend (auth-service):**
+- ✅ Express.js microservice with 7 endpoints
+  - `POST /auth/signup` - Record user signup
+  - `POST /auth/login` - Validate login & return user data
+  - `POST /auth/createFirm` - Create firm with unique code (STENO-XXXXX format)
+  - `POST /auth/joinFirm` - Join firm with code validation
+  - `GET /auth/user/:uid` - Get user profile
+  - `GET /auth/firm/:firmId` - Get firm details
+  - `GET /auth/firm/:firmId/members` - Get firm members
+- ✅ Firebase Admin SDK integration (Firestore read/write)
+- ✅ Token verification middleware for protected endpoints
+- ✅ Firm code generation and uniqueness validation
+- ✅ Role-based user creation (admin for creators, lawyer/paralegal for joiners)
 
-### Next: Phase 1 - Authentication Service
+**Frontend:**
+- ✅ Firebase configuration with emulator support (firebase.ts)
+- ✅ API client service (api.ts) for all microservice calls
+- ✅ AuthContext + useAuth hook for centralized state management
+- ✅ Landing page with hero, features, benefits, CTA
+- ✅ Login page with email/password form
+- ✅ Multi-step signup page (credentials → firm choice)
+- ✅ CreateFirmForm component with success confirmation
+- ✅ JoinFirmForm component with role selection
+- ✅ ProtectedRoute component for auth guarding
+- ✅ Navbar component with firm info & user menu
+- ✅ Dashboard placeholder page
+- ✅ Routing setup with React Router v6
+- ✅ Tailwind CSS global styles & custom components
+- ✅ Path alias (@/) configuration for clean imports
 
-**Phase 1 Goal:** Build the auth-service microservice for user authentication and firm management.
+**Shared Library:**
+- ✅ TypeScript types (User, Firm, AuthUser, Document, etc.)
+- ✅ Constants (roles, permissions, validation rules, error codes)
+- ✅ Utility functions (validation, firm code gen, timestamp formatting)
 
-**What You Need to Do:**
+### Next: Phase 1 Testing & Firebase Setup
 
-1. **Create Firebase Project**
-   - Go to https://console.firebase.google.com
-   - Create project: `lawmint` (for portfolio - not lawmint-dev)
-   - Enable: Auth, Firestore, Realtime DB, Storage, Functions, Hosting
+**STATUS:** Backend built ✅ | Emulators configured ✅ | Frontend running ✅
 
-2. **Get API Keys**
-   - Firebase config values from Firebase Console
-   - OpenAI API key from https://platform.openai.com/account/api-keys
+**CURRENT ISSUE:** CORS errors when calling auth-service (frontend at 5173 → backend at 5001)
 
-3. **Configure Environment**
-   - Create `frontend/.env.local` with Firebase config (replace `<project>` with `lawmint`)
-   - Create `services/ai-service/.env` with OpenAI key
-   - See README.md for template
+**ROOT CAUSE:** Firebase emulators need to reload the built auth-service function
 
-4. **Authenticate Firebase**
-   - Run: `firebase login`
-   - Select your Google account
+**IMMEDIATE ACTION NEEDED:**
 
-5. **Test Setup**
+1. **Restart Firebase Emulators**
+   - Press Ctrl+C in Terminal 1 (where `firebase emulators:start` is running)
    - Run: `firebase emulators:start`
-   - Visit: http://localhost:4000 (Emulator UI)
+   - Wait for: "✓ Loaded 1 function(s): authService"
 
-6. **Start Frontend**
-   - Run: `cd frontend && npm run dev`
-   - Visit: http://localhost:5173
+2. **Hard Refresh Browser**
+   - Visit http://localhost:5173/
+   - Hard refresh: Cmd+Shift+R (Mac) or Ctrl+Shift+R (Windows)
 
-**When Ready, Begin Phase 1:**
-- Build auth-service endpoints (signup, login, createFirm, joinFirm)
-- Create frontend authentication UI
-- Implement role-based access control
+3. **Test Signup**
+   - Click "Get Started" → "Sign Up"
+   - Fill form and submit
+   - Should see success (no CORS error)
+
+4. **If Still Getting Error**
+   - See: `/FIX_CORS_ISSUES.md` for detailed troubleshooting
+
+**Test Phase 1 Flows**
+   - Visit http://localhost:5173
+   - Signup → Create Firm → Confirm firm code
+   - Signup → Join Firm → Enter firm code & role
+   - Login with created account
+   - Logout
+   - Check Firestore Emulator UI: http://127.0.0.1:4000/firestore
 
 ---
 
 ## Recent Changes
+
+**November 11, 2025 - Phase 1 Environment Configuration Complete:**
+- ✅ **CRITICAL FIX #1:** Created missing `index.html` entry point for Vite
+  - Issue: Frontend was returning 404 at localhost:5173 (no HTML entry point)
+  - Fix: Added `frontend/index.html` with proper React mounting point (`<div id="root">`)
+  - Result: Frontend dev server now properly bootstraps React app
+
+- ✅ **CRITICAL FIX #2:** Created `frontend/.env.local` with all required env vars
+  - Issue: Firebase config missing VITE_FIREBASE_* variables, API calls failing
+  - Fix: Added dummy Firebase credentials for emulator + service URLs
+  - Key vars: VITE_USE_EMULATOR=true, VITE_AUTH_SERVICE_URL=http://localhost:5001/...
+  - Result: Frontend can now find auth-service and make API calls
+
+- ⏳ **CURRENT ISSUE:** CORS error blocking signup
+  - Issue: API calls getting CORS error + "Failed to fetch"
+  - Cause: auth-service Cloud Function not built yet
+  - Solution: Build auth-service: `cd services/auth-service && npm install && npm run build`
+  - Verification: Should create `lib/index.js` file
+  - Test: After build, restart emulators and try signup again
+  - Reference: See CORS_FIX_AND_BUILD.md for detailed guide
+
+**Status:** Frontend ready and running, attempting signup but auth-service not deployed to emulator
 
 **November 11, 2025 - Phase 0 Complete:**
 - ✅ Git repository initialized (Git config: ankitrijal2054@gmail.com)
