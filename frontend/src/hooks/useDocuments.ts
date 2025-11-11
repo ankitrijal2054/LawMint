@@ -138,16 +138,33 @@ export function useCreateDocument() {
       visibility?: 'private' | 'shared' | 'firm-wide';
       content?: string;
     }) => {
+      console.log('useCreateDocument: calling API with', data);
       const response = await apiClient.createDocument(data);
-      if (!response.success) throw new Error(response.error);
-      return response.data?.documentId;
+      console.log('useCreateDocument: API response', response);
+      
+      if (!response.success) {
+        console.error('useCreateDocument: success is false', response.error);
+        throw new Error(response.error);
+      }
+      
+      const documentId = response.data?.documentId;
+      console.log('useCreateDocument: extracted documentId', documentId);
+      
+      if (!documentId) {
+        console.error('useCreateDocument: documentId is null/undefined', response.data);
+        throw new Error('API did not return documentId');
+      }
+      
+      return documentId;
     },
-    onSuccess: () => {
+    onSuccess: (documentId) => {
+      console.log('useCreateDocument: onSuccess with', documentId);
       toast.success('Document created successfully');
       // Invalidate document queries
       queryClient.invalidateQueries({ queryKey: ['documents'] });
     },
     onError: (error) => {
+      console.error('useCreateDocument: onError', error);
       toast.error((error as Error).message || 'Failed to create document');
     },
   });

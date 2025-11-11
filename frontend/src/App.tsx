@@ -15,6 +15,7 @@ import { Signup } from '@/pages/Signup';
 import { Dashboard } from '@/pages/Dashboard';
 import { Templates } from '@/pages/Templates';
 import { NewDocument } from '@/pages/NewDocument';
+import DocumentEditorPage from '@/pages/DocumentEditorPage';
 
 // Components
 import { CreateFirmForm } from '@/components/CreateFirmForm';
@@ -59,6 +60,14 @@ export function App() {
             element={
               <ProtectedRoute>
                 <NewDocument />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/documents/:documentId"
+            element={
+              <ProtectedRoute>
+                <DocumentEditorPage />
               </ProtectedRoute>
             }
           />

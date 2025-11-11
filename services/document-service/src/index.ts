@@ -255,7 +255,8 @@ expressApp.post('/documents', verifyToken, async (req: Request, res: Response) =
       sourceDocuments,
       visibility,
       sharedWith: visibility === 'shared' ? [] : [],
-      activeUsers: [{ uid, name: (req as any).user.email, lastActive: now }],
+      activeUsers: [{ uid, name: (req as any).user.email }],
+      lastActivityAt: now,
       status: 'draft',
       metadata: {
         lastEditedBy: uid,
@@ -271,8 +272,10 @@ expressApp.post('/documents', verifyToken, async (req: Request, res: Response) =
 
     res.status(201).json({
       success: true,
-      documentId,
-      document: documentData,
+      data: {
+        documentId,
+        document: documentData,
+      },
     });
   } catch (error) {
     console.error('Error creating document:', error);

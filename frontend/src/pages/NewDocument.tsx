@@ -110,6 +110,7 @@ export const NewDocument: React.FC = () => {
 
       // Step 1: Upload source documents to get extracted text
       toast.loading('Uploading source documents...');
+      console.log('Step 1: Uploading sources...');
       const uploadResponse = await uploadSourcesMutation.mutateAsync({
         files: stepData.sourceFiles.map((f) => ({
           filename: f.filename,
@@ -117,13 +118,22 @@ export const NewDocument: React.FC = () => {
         })),
       });
 
-      const extractedTexts = uploadResponse.extractedTexts;
-      const sourceDocuments = uploadResponse.sourceDocuments;
+      console.log('Upload response:', uploadResponse);
+      const extractedTexts = uploadResponse.extractedTexts || [];
+      const sourceDocuments = uploadResponse.sourceDocuments || [];
 
       toast.dismiss();
       toast.loading('Generating document with AI...');
 
       // Step 2: Generate document using AI service
+      console.log('Step 2: Generating with AI...');
+      console.log('Generation inputs:', {
+        templateId: stepData.templateId,
+        templateContent: stepData.templateContent ? 'present' : 'missing',
+        sourceTexts: extractedTexts.length,
+        customInstructions: stepData.customInstructions,
+      });
+      
       const generateResponse = await generateMutation.mutateAsync({
         templateId: stepData.templateId || undefined,
         templateContent: stepData.templateContent || undefined,
@@ -131,27 +141,46 @@ export const NewDocument: React.FC = () => {
         customInstructions: stepData.customInstructions,
       });
 
+      console.log('Generate response:', generateResponse);
+      
+      // Check if content is empty - indicates backend issue
+      if (!generateResponse.content || generateResponse.content.trim().length === 0) {
+        console.error('AI returned empty content!');
+        toast.error('AI service returned empty content. Check if ai-service is running with OPENAI_API_KEY set.');
+        setIsGenerating(false);
+        return;
+      }
+      
       toast.dismiss();
       toast.loading('Creating document...');
 
       // Step 3: Create document in Firestore
+      console.log('Step 3: Creating document...');
       const createResponse = await createDocumentMutation.mutateAsync({
         title: `Demand Letter - ${new Date().toLocaleDateString()}`,
         firmId: user.firmId,
         templateId: stepData.templateId || undefined,
         sourceDocuments,
         visibility: 'private',
-        content: generateResponse.content,
+        content: generateResponse.content || '',
       });
+
+      console.log('Create response:', createResponse);
+      console.log('Document ID to navigate to:', createResponse);
 
       toast.dismiss();
       toast.success('Document generated successfully!');
 
       // Redirect to document editor
-      if (createResponse) {
-        navigate(`/documents/${createResponse}/edit`, {
+      if (createResponse && typeof createResponse === 'string') {
+        console.log('Navigating to:', `/documents/${createResponse}`);
+        navigate(`/documents/${createResponse}`, {
           state: { newDocument: true },
         });
+      } else {
+        console.error('Invalid createResponse:', createResponse);
+        toast.error('Created document but could not open editor');
+        setIsGenerating(false);
       }
     } catch (error) {
       setIsGenerating(false);

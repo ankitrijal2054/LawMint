@@ -263,7 +263,8 @@ expressApp.post('/documents', verifyToken, async (req, res) => {
             sourceDocuments,
             visibility,
             sharedWith: visibility === 'shared' ? [] : [],
-            activeUsers: [{ uid, name: req.user.email, lastActive: now }],
+            activeUsers: [{ uid, name: req.user.email }],
+            lastActivityAt: now,
             status: 'draft',
             metadata: {
                 lastEditedBy: uid,
@@ -277,8 +278,10 @@ expressApp.post('/documents', verifyToken, async (req, res) => {
         await db.collection('documents').doc(documentId).set(documentData);
         res.status(201).json({
             success: true,
-            documentId,
-            document: documentData,
+            data: {
+                documentId,
+                document: documentData,
+            },
         });
     }
     catch (error) {

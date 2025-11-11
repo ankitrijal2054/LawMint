@@ -305,8 +305,10 @@ Please generate a complete, professional demand letter that incorporates the tem
         }));
         res.status(200).json({
             success: true,
-            content: generatedContent,
-            model: OPENAI_MODEL,
+            data: {
+                content: generatedContent,
+                model: OPENAI_MODEL,
+            },
         });
     }
     catch (error) {
@@ -364,8 +366,10 @@ Please provide the refined version of the document, incorporating the requested 
         }));
         res.status(200).json({
             success: true,
-            content: refinedContent,
-            model: OPENAI_MODEL,
+            data: {
+                content: refinedContent,
+                model: OPENAI_MODEL,
+            },
         });
     }
     catch (error) {

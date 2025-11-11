@@ -272,7 +272,7 @@ expressApp.post('/ai/generate', verifyToken, async (req: Request, res: Response)
 
     // Prepare source text summary
     const sourceTextSummary = sourceTexts
-      .map((text, idx) => `[Source Document ${idx + 1}]\n${text}`)
+      .map((text: string, idx: number) => `[Source Document ${idx + 1}]\n${text}`)
       .join('\n\n---\n\n');
 
     // Build user prompt
@@ -307,8 +307,10 @@ Please generate a complete, professional demand letter that incorporates the tem
 
     res.status(200).json({
       success: true,
-      content: generatedContent,
-      model: OPENAI_MODEL,
+      data: {
+        content: generatedContent,
+        model: OPENAI_MODEL,
+      },
     });
   } catch (error: any) {
     console.error('Error generating document:', error);
@@ -373,8 +375,10 @@ Please provide the refined version of the document, incorporating the requested 
 
     res.status(200).json({
       success: true,
-      content: refinedContent,
-      model: OPENAI_MODEL,
+      data: {
+        content: refinedContent,
+        model: OPENAI_MODEL,
+      },
     });
   } catch (error: any) {
     console.error('Error refining document:', error);
