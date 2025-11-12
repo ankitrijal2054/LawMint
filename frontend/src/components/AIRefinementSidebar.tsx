@@ -111,18 +111,18 @@ export const AIRefinementSidebar: React.FC<AIRefinementSidebarProps> = ({
     );
   };
 
-  // Handle accepting refinement
+  // Handle accepting refinement (silent - no toast needed)
   const handleAcceptRefinement = (request: RefinementRequest) => {
     if (request.refinedContent && onRefine) {
       onRefine(request.refinedContent);
-      toast.success('Refinement accepted');
+      // Silent action - already shows in refinement history UI
     }
   };
 
-  // Handle rejecting refinement
+  // Handle rejecting refinement (silent - no toast needed)
   const handleRejectRefinement = (requestId: string) => {
     setRefinementHistory((prev) => prev.filter((req) => req.id !== requestId));
-    toast.success('Refinement rejected');
+    // Silent action - already shows in refinement history UI
   };
 
   // Clear history

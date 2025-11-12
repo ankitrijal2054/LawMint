@@ -61,7 +61,7 @@ const DocumentEditorPage: React.FC = () => {
     }
   }, [document]);
 
-  // Handle title change with debounced auto-save
+  // Handle title change with debounced auto-save (silent)
   const handleTitleChange = (newTitle: string) => {
     setTitle(newTitle);
 
@@ -84,10 +84,12 @@ const DocumentEditorPage: React.FC = () => {
             onSuccess: () => {
               setLastSaved(now);
               setIsSaving(false);
-              toast.success('Title saved');
+              // Silent save - no toast needed for auto-saves
             },
             onError: (error: any) => {
               setIsSaving(false);
+              // Only show error toast
+              toast.error('Failed to save title');
               console.error('Save error:', error);
             },
           }
@@ -97,6 +99,7 @@ const DocumentEditorPage: React.FC = () => {
   };
 
   // Handle content change (memoized to prevent editor re-renders)
+  // Auto-save is silent to avoid cluttering the UI with toasts
   const handleContentChange = useCallback((newContent: string) => {
     setContent(newContent);
 
@@ -117,9 +120,11 @@ const DocumentEditorPage: React.FC = () => {
             onSuccess: () => {
               setLastSaved(now);
               setIsSaving(false);
+              // Silent auto-save - only show "Saving..." indicator
             },
             onError: (error: any) => {
               setIsSaving(false);
+              // Only show error toast on failure
               toast.error('Failed to save document');
               console.error('Save error:', error);
             },

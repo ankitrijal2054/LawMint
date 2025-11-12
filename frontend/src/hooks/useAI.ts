@@ -41,6 +41,7 @@ export interface RefineDocumentResponse {
  * Generate a demand letter draft using OpenAI
  * Input: template + source documents + optional custom instructions
  * Output: complete demand letter draft ready for review
+ * Note: Toasts are handled by the caller component to avoid duplicates
  */
 export function useGenerateDocument() {
   return useMutation<
@@ -84,13 +85,7 @@ export function useGenerateDocument() {
         throw error;
       }
     },
-    onSuccess: (data) => {
-      toast.success(`Document generated successfully (using ${data.model})`);
-    },
-    onError: (error) => {
-      console.error('Generation error:', error);
-      toast.error((error as Error).message || 'Failed to generate document');
-    },
+    // Toast notifications are handled by the calling component
   });
 }
 
@@ -98,6 +93,7 @@ export function useGenerateDocument() {
  * Refine an existing document with custom instructions
  * Input: current document content + refinement instructions
  * Output: refined document with requested improvements
+ * Note: Toasts are handled by AIRefinementSidebar component to avoid duplicates
  */
 export function useRefineDocument() {
   return useMutation<
@@ -142,13 +138,7 @@ export function useRefineDocument() {
         throw error;
       }
     },
-    onSuccess: (data) => {
-      toast.success(`Document refined successfully (using ${data.model})`);
-    },
-    onError: (error) => {
-      console.error('Refinement error:', error);
-      toast.error((error as Error).message || 'Failed to refine document');
-    },
+    // Toast notifications are handled by the calling component
   });
 }
 

@@ -173,6 +173,7 @@ export function useCreateDocument() {
 
 /**
  * Update document content
+ * Note: Toasts are handled by the caller (DocumentEditorPage) to avoid duplicates
  */
 export function useUpdateDocument(documentId: string) {
   const queryClient = useQueryClient();
@@ -187,19 +188,17 @@ export function useUpdateDocument(documentId: string) {
       return response.data;
     },
     onSuccess: () => {
-      toast.success('Document updated');
       // Invalidate specific document query
       queryClient.invalidateQueries({ queryKey: ['document', documentId] });
       queryClient.invalidateQueries({ queryKey: ['documents'] });
     },
-    onError: (error) => {
-      toast.error((error as Error).message || 'Failed to update document');
-    },
+    // Error handling is done by caller
   });
 }
 
 /**
  * Delete a document
+ * Note: Toast notifications are handled by the caller component
  */
 export function useDeleteDocument() {
   const queryClient = useQueryClient();
@@ -211,18 +210,16 @@ export function useDeleteDocument() {
       return response.data;
     },
     onSuccess: () => {
-      toast.success('Document deleted');
       // Invalidate document queries
       queryClient.invalidateQueries({ queryKey: ['documents'] });
     },
-    onError: (error) => {
-      toast.error((error as Error).message || 'Failed to delete document');
-    },
+    // Error handling is done by caller
   });
 }
 
 /**
  * Share document with users
+ * Note: Toasts are shown in ShareDocumentModal component to avoid duplicates
  */
 export function useShareDocument(documentId: string) {
   const queryClient = useQueryClient();
@@ -237,14 +234,11 @@ export function useShareDocument(documentId: string) {
       return response.data;
     },
     onSuccess: () => {
-      toast.success('Document sharing updated');
       // Invalidate document queries
       queryClient.invalidateQueries({ queryKey: ['document', documentId] });
       queryClient.invalidateQueries({ queryKey: ['documents'] });
     },
-    onError: (error) => {
-      toast.error((error as Error).message || 'Failed to update sharing');
-    },
+    // Error handling is done by caller
   });
 }
 
