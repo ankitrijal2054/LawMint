@@ -96,8 +96,8 @@ const DocumentEditorPage: React.FC = () => {
     }, 2000); // Save after 2 seconds of inactivity
   };
 
-  // Handle content change
-  const handleContentChange = (newContent: string) => {
+  // Handle content change (memoized to prevent editor re-renders)
+  const handleContentChange = useCallback((newContent: string) => {
     setContent(newContent);
 
     // Debounce auto-save
@@ -106,9 +106,28 @@ const DocumentEditorPage: React.FC = () => {
     }
 
     saveTimeoutRef.current = setTimeout(() => {
-      handleSave(newContent);
+      // Call save directly instead of via handleSave to avoid dependency issues
+      if (documentId && user) {
+        setIsSaving(true);
+        const now = new Date();
+
+        updateDocument(
+          { content: newContent },
+          {
+            onSuccess: () => {
+              setLastSaved(now);
+              setIsSaving(false);
+            },
+            onError: (error: any) => {
+              setIsSaving(false);
+              toast.error('Failed to save document');
+              console.error('Save error:', error);
+            },
+          }
+        );
+      }
     }, 3000); // Save after 3 seconds of inactivity
-  };
+  }, [documentId, user, updateDocument]);
 
   // Save document
   const handleSave = useCallback(

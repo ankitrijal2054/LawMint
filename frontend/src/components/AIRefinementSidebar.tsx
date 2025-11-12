@@ -144,7 +144,7 @@ export const AIRefinementSidebar: React.FC<AIRefinementSidebarProps> = ({
             </div>
             <h2 className="font-display text-lg font-semibold text-gray-900">AI Refine</h2>
           </div>
-          <button
+          {/* <button
             onClick={() => setIsExpanded(!isExpanded)}
             className="text-gray-400 hover:text-gray-600 transition"
           >
@@ -153,7 +153,7 @@ export const AIRefinementSidebar: React.FC<AIRefinementSidebarProps> = ({
             ) : (
               <Wand2 size={20} />
             )}
-          </button>
+          </button>*/}
         </div>
       </div>
 

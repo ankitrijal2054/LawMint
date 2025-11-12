@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, memo } from 'react';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 // import Collaboration from '@tiptap/extension-collaboration';
@@ -30,7 +30,7 @@ interface DocumentEditorProps {
  * Rich text editor component using TipTap with real-time collaboration
  * Features: Formatting toolbar, auto-save, character/word count
  */
-export const DocumentEditor: React.FC<DocumentEditorProps> = ({
+const DocumentEditorComponent: React.FC<DocumentEditorProps> = ({
   documentId,
   initialContent,
   ydoc,
@@ -41,6 +41,9 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
   const [wordCount, setWordCount] = useState(0);
   const [charCount, setCharCount] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Track if we've already initialized content to avoid re-initializing on focus loss
+  const isInitializedRef = React.useRef(false);
 
   const editor = useEditor(
     {
@@ -62,7 +65,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
         //   },
         // }),
       ],
-      content: initialContent || '<p>Start typing...</p>',
+      content: '<p></p>', // Start empty, will set content via useEffect
       editable: !readOnly,
       onUpdate: ({ editor }) => {
         const html = editor.getHTML();
@@ -82,8 +85,25 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
         setIsSaving(false);
       },
     },
-    [readOnly, initialContent, ydoc]
+    [readOnly]
   );
+
+  // Update editor content when initialContent changes, without losing focus
+  // Uses a ref to track initialization to prevent multiple updates
+  useEffect(() => {
+    if (!editor || !initialContent) return;
+
+    // Only update if content is different from current editor content
+    // This prevents re-renders when the prop hasn't actually changed
+    const currentContent = editor.getHTML();
+    const newContent = initialContent;
+
+    if (currentContent !== newContent) {
+      editor.commands.setContent(newContent);
+    }
+
+    isInitializedRef.current = true;
+  }, [editor, initialContent]);
 
   // Debounced auto-save handler
   const handleAutoSave = useCallback(async () => {
@@ -279,6 +299,20 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
     </div>
   );
 };
+
+// Memoize component to prevent unnecessary re-renders
+// Only re-render if props actually change
+export const DocumentEditor = memo(DocumentEditorComponent, (prevProps, nextProps) => {
+  // Return true if props are equal (don't re-render)
+  // Return false if props changed (do re-render)
+  return (
+    prevProps.documentId === nextProps.documentId &&
+    prevProps.initialContent === nextProps.initialContent &&
+    prevProps.readOnly === nextProps.readOnly &&
+    prevProps.userColor === nextProps.userColor &&
+    prevProps.onContentChange === nextProps.onContentChange
+  );
+});
 
 export default DocumentEditor;
 

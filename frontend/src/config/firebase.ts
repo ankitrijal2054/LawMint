@@ -8,6 +8,7 @@ import { initializeApp, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth, connectAuthEmulator } from 'firebase/auth';
 import { getFirestore, Firestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { getStorage, FirebaseStorage, connectStorageEmulator } from 'firebase/storage';
+import { getDatabase, Database, connectDatabaseEmulator } from 'firebase/database';
 
 // ============================================================================
 // FIREBASE CONFIG
@@ -20,6 +21,7 @@ const firebaseConfig = {
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
 };
 
 // Validate required environment variables
@@ -30,6 +32,7 @@ const requiredEnvVars = [
   'VITE_FIREBASE_STORAGE_BUCKET',
   'VITE_FIREBASE_MESSAGING_SENDER_ID',
   'VITE_FIREBASE_APP_ID',
+  'VITE_FIREBASE_DATABASE_URL',
 ];
 
 const missingEnvVars = requiredEnvVars.filter(
@@ -52,6 +55,7 @@ const app: FirebaseApp = initializeApp(firebaseConfig);
 const auth: Auth = getAuth(app);
 const db: Firestore = getFirestore(app);
 const storage: FirebaseStorage = getStorage(app);
+const rtdb: Database = getDatabase(app);
 
 // ============================================================================
 // EMULATOR SETUP (Development Only)
@@ -83,6 +87,13 @@ if (useEmulator) {
       connectStorageEmulator(storage, 'localhost', storageEmulatorPort);
       console.log(`🔥 Connected to Storage Emulator (port ${storageEmulatorPort})`);
     }
+
+    // Realtime Database Emulator
+    const rtdbEmulatorPort = import.meta.env.VITE_FIREBASE_RTDB_EMULATOR_PORT || 9000;
+    if (!(rtdb as any).app?.options?.databaseURL?.includes('localhost')) {
+      connectDatabaseEmulator(rtdb, 'localhost', rtdbEmulatorPort);
+      console.log(`🔥 Connected to Realtime Database Emulator (port ${rtdbEmulatorPort})`);
+    }
   } catch (error: any) {
     // Emulators might already be connected
     if (error.code !== 'auth/emulator-config-failed') {
@@ -95,5 +106,5 @@ if (useEmulator) {
 // EXPORTS
 // ============================================================================
 
-export { app, auth, db, storage, useEmulator };
+export { app, auth, db, storage, rtdb, useEmulator };
 

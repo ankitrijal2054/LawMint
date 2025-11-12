@@ -111,8 +111,8 @@ export function useSharedDocuments(uid: string | null) {
       if (!uid) return [];
       const response = await apiClient.getSharedDocuments(uid);
       if (!response.success) throw new Error(response.error);
-      // Backend returns { success: true, documents } at root level
-      return (response as any).documents as Document[];
+      // Backend returns { success: true, data: { documents } }
+      return response.data?.documents as Document[] || [];
     },
     enabled: !!uid,
     staleTime: 60000, // 1 minute
