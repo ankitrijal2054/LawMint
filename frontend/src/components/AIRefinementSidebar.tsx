@@ -58,19 +58,15 @@ export const AIRefinementSidebar: React.FC<AIRefinementSidebarProps> = ({
     setRefinementHistory((prev) => [newRequest, ...prev]);
     setInstructions('');
 
-    // Call API
-    // @ts-ignore
+    // Call API with correct parameter names
     refineDocument(
       {
-        // @ts-ignore
-        documentId,
         content: currentContent,
-        instructions: newRequest.instructions,
+        refinementInstructions: newRequest.instructions,
       },
       {
         onSuccess: (response) => {
-          // @ts-ignore
-          const refinedContent = response.content || response.refinedContent || '';
+          const refinedContent = response.content || '';
 
           setRefinementHistory((prev) =>
             prev.map((req) =>

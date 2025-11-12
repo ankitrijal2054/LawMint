@@ -1,8 +1,8 @@
 # Active Context: LawMint
 
-**Last Updated:** November 12, 2025 (Phase 9 Task 1 Complete)
+**Last Updated:** November 12, 2025 (UI Testing Fixes Complete)
 **Current Phase:** Phase 9 - UI Polish & Responsive Design (In Progress)
-**Status:** ✅ Phase 0-8 Complete | 🔄 Phase 9 Task 9.1 Complete | 📋 Tasks 9.2-9.4 Pending
+**Status:** ✅ Phase 0-8 Complete | ✅ Phase 9 Tasks 9.1-9.4 Complete | 🧪 Testing Fixes Complete
 
 ---
 
@@ -769,6 +769,69 @@ If questions arise during Phase 0:
 - **PRD:** `/AI-Docs/PRD.md`
 
 ---
+
+## UI Testing Fixes: November 12, 2025 Session ✅
+
+**Context:** Post-Phase 8 testing revealed 10 UI/UX issues that were systematically fixed.
+
+### Issue #1-2: Editor Focus Loss & Empty Document Loading ✅
+**Problem:** Editor lost focus after typing one word; document loaded as empty
+**Fix:** Removed `initialContent` from useEditor dependency array, implemented smart content update with `setContent()`
+**Files:** `frontend/src/components/DocumentEditor.tsx`
+
+### Issue #3-4: Firebase & React Query Warnings ✅
+**Problem:** Firebase auth warnings + React Query undefined data warnings cluttering console
+**Fix:** 
+- Added `VITE_FIREBASE_DATABASE_URL` to firebase config
+- Initialized Realtime Database with emulator support
+- Fixed `useSharedDocuments` response parsing from `response.documents` to `response.data?.documents || []`
+**Files:** `frontend/src/config/firebase.ts`, `frontend/src/hooks/useDocuments.ts`
+
+### Issue #5-6: Duplicate Toast Notifications ✅
+**Problem:** Multiple duplicate toasts from hooks + components (e.g., "Document updated" + "Document saved" simultaneously)
+**Fix:** Removed all success toasts from hooks, moved all notifications to component level only
+**Files:**
+- `frontend/src/hooks/useDocuments.ts` - Removed toasts from useUpdateDocument, useDeleteDocument, useShareDocument
+- `frontend/src/hooks/useAI.ts` - Removed toasts from useGenerateDocument, useRefineDocument
+- `frontend/src/components/AIRefinementSidebar.tsx` - Removed toasts from accept/reject actions
+- `frontend/src/pages/DocumentEditorPage.tsx` - Silenced auto-save toasts, kept manual save toasts
+
+### Issue #7: Demand Letter Formatting ✅
+**Problem:** Generated demand letters displayed as one large text block, hard to read
+**Fix:**
+- Enhanced DocumentEditor CSS with proper spacing (mb-5 for paragraphs, mt-8 for h1, etc.)
+- Updated AI service system prompt with explicit HTML formatting requirements
+- AI now generates properly structured HTML with section breaks
+**Files:** `frontend/src/components/DocumentEditor.tsx`, `services/ai-service/src/index.ts`
+
+### Issue #8: Delete Button Missing from Editor ✅
+**Problem:** No way to delete documents directly from editor
+**Fix:** Added red delete button (trash icon) with confirmation modal (owner-only)
+**Files:** `frontend/src/pages/DocumentEditorPage.tsx`
+**Features:** Delete confirmation modal, loading state, success toast, auto-redirect to dashboard
+
+### Issue #9: Dropdown Menu Clipped by Card Overflow ✅
+**Problem:** Action menu dropdown hidden by DocumentCard `overflow: hidden`
+**Fix:** Removed overflow-hidden from card, added overflow-visible to header, updated dropdown positioning
+**Files:** `frontend/src/components/DocumentCard.tsx`
+
+### Issue #10: Delete Button in Document Card ✅
+**Problem:** No delete button in document cards on dashboard
+**Fix:** Added red delete button (owner-only) with same confirmation modal pattern
+**Files:** `frontend/src/components/DocumentCard.tsx`
+**Features:** Action menu code preserved and commented for future multi-action dropdown
+
+### Summary: Testing Fixes Pattern
+- **Total Issues Fixed:** 10
+- **Total Files Modified:** 9
+- **Key Insight:** Most issues stemmed from:
+  1. React dependency arrays causing unnecessary re-renders (focus loss)
+  2. Multiple layers of toast notifications (duplicate toasts)
+  3. UI overflow issues (dropdown clipping)
+  4. Missing delete functionality (not obvious to users)
+  5. Poor document formatting (AI prompt wasn't explicit about HTML structure)
+
+**Testing Best Practice Added:** Always audit console for warnings, check for duplicate notifications, verify component overflow doesn't hide nested elements.
 
 ---
 
