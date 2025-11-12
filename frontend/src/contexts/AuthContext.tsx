@@ -45,6 +45,11 @@ export interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   createFirm: (firmName: string) => Promise<{ firmId: string; firmCode: string }>;
   joinFirm: (firmCode: string, role: 'lawyer' | 'paralegal') => Promise<{ firmId: string }>;
+  
+  // Atomic methods that create account + firm in one transaction
+  signupAndCreateFirm: (email: string, password: string, name: string, firmName: string) => Promise<{ firmId: string; firmCode: string }>;
+  signupAndJoinFirm: (email: string, password: string, name: string, firmCode: string, role: 'lawyer' | 'paralegal') => Promise<{ firmId: string }>;
+  
   logout: () => Promise<void>;
   clearError: () => void;
 }
@@ -137,15 +142,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
           } else {
             // User exists in Firebase but not in Firestore
             // This is expected during signup flow - wait for firm creation/join
+            // Don't treat this as an error, just stop loading
             dispatch({ type: 'SET_LOADING', payload: false });
           }
         } else {
           dispatch({ type: 'CLEAR_USER' });
         }
       } catch (error: any) {
-        console.error('Auth state change error:', error);
-        dispatch({ type: 'SET_ERROR', payload: error.message });
-        dispatch({ type: 'SET_LOADING', payload: false });
+        // Handle "User not found" gracefully - this is expected during signup
+        if (error.message?.includes('User not found') || error.message?.includes('404')) {
+          // Firebase user exists but Firestore user doesn't yet (signup in progress)
+          // This is normal - just stop loading and let the signup flow complete
+          console.log('Firebase user exists but Firestore user not created yet (signup in progress)');
+          dispatch({ type: 'SET_LOADING', payload: false });
+        } else {
+          // Actual error - log and set error state
+          console.error('Auth state change error:', error);
+          dispatch({ type: 'SET_ERROR', payload: error.message });
+          dispatch({ type: 'SET_LOADING', payload: false });
+        }
       }
     });
 
@@ -311,6 +326,119 @@ export function AuthProvider({ children }: AuthProviderProps) {
     [state.firebaseUser]
   );
 
+  const signupAndCreateFirm = useCallback(
+    async (email: string, password: string, name: string, firmName: string) => {
+      let firebaseUser: FirebaseUser | null = null;
+      
+      try {
+        dispatch({ type: 'SET_LOADING', payload: true });
+        dispatch({ type: 'CLEAR_ERROR' });
+
+        // Step 1: Create Firebase user
+        const userCredential: UserCredential = await createUserWithEmailAndPassword(
+          auth,
+          email,
+          password
+        );
+        firebaseUser = userCredential.user;
+
+        // Step 2: Create firm (this also creates user in Firestore)
+        const response = await apiClient.createFirm({
+          name: firmName,
+          userFullName: name,
+        });
+
+        if (!response.success) {
+          throw new Error(response.error || 'Failed to create firm');
+        }
+
+        // Step 3: Fetch user data
+        const userResponse = await apiClient.getUser(firebaseUser.uid);
+        if (userResponse.success && userResponse.data) {
+          dispatch({ type: 'SET_USER', payload: userResponse.data as AuthUser });
+          dispatch({ type: 'SET_FIREBASE_USER', payload: firebaseUser });
+        }
+
+        toast.success(`Account created and firm "${firmName}" created successfully!`);
+        dispatch({ type: 'SET_LOADING', payload: false });
+
+        return response.data as { firmId: string; firmCode: string };
+      } catch (error: any) {
+        // Rollback: Delete Firebase user if it was created
+        if (firebaseUser) {
+          try {
+            await firebaseUser.delete();
+          } catch (deleteError) {
+            console.error('Failed to delete Firebase user during rollback:', deleteError);
+          }
+        }
+
+        const errorMessage = error.message || 'Failed to create account and firm';
+        dispatch({ type: 'SET_ERROR', payload: errorMessage });
+        toast.error(errorMessage);
+        throw error;
+      }
+    },
+    []
+  );
+
+  const signupAndJoinFirm = useCallback(
+    async (email: string, password: string, name: string, firmCode: string, role: 'lawyer' | 'paralegal') => {
+      let firebaseUser: FirebaseUser | null = null;
+      
+      try {
+        dispatch({ type: 'SET_LOADING', payload: true });
+        dispatch({ type: 'CLEAR_ERROR' });
+
+        // Step 1: Create Firebase user
+        const userCredential: UserCredential = await createUserWithEmailAndPassword(
+          auth,
+          email,
+          password
+        );
+        firebaseUser = userCredential.user;
+
+        // Step 2: Join firm (this also creates user in Firestore)
+        const response = await apiClient.joinFirm({
+          firmCode,
+          role,
+          userFullName: name,
+        });
+
+        if (!response.success) {
+          throw new Error(response.error || 'Failed to join firm');
+        }
+
+        // Step 3: Fetch user data
+        const userResponse = await apiClient.getUser(firebaseUser.uid);
+        if (userResponse.success && userResponse.data) {
+          dispatch({ type: 'SET_USER', payload: userResponse.data as AuthUser });
+          dispatch({ type: 'SET_FIREBASE_USER', payload: firebaseUser });
+        }
+
+        toast.success('Account created and successfully joined firm!');
+        dispatch({ type: 'SET_LOADING', payload: false });
+
+        return response.data as { firmId: string };
+      } catch (error: any) {
+        // Rollback: Delete Firebase user if it was created
+        if (firebaseUser) {
+          try {
+            await firebaseUser.delete();
+          } catch (deleteError) {
+            console.error('Failed to delete Firebase user during rollback:', deleteError);
+          }
+        }
+
+        const errorMessage = error.message || 'Failed to create account and join firm';
+        dispatch({ type: 'SET_ERROR', payload: errorMessage });
+        toast.error(errorMessage);
+        throw error;
+      }
+    },
+    []
+  );
+
   const logout = useCallback(async () => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
@@ -344,6 +472,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     login,
     createFirm,
     joinFirm,
+    signupAndCreateFirm,
+    signupAndJoinFirm,
     logout,
     clearError,
   };

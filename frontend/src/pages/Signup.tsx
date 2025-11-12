@@ -1,21 +1,26 @@
 /**
  * Signup Page
- * Multi-step signup flow: Create account -> Choose firm action
+ * Multi-step signup flow: Collect credentials -> Choose firm action -> Create account + firm atomically
  */
 
 import { useState, FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
 import { FileText, ArrowRight, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 
 type SignupStep = 'credentials' | 'firm-choice';
 type FirmAction = 'create' | 'join' | null;
 
+// Define signup credentials type for passing to firm forms
+export interface SignupCredentials {
+  email: string;
+  password: string;
+  name: string;
+}
+
 export function Signup() {
   const navigate = useNavigate();
-  const { signup } = useAuth();
 
-  // Step 1: Credentials
+  // Step 1: Credentials (stored but not submitted to Firebase yet)
   const [step, setStep] = useState<SignupStep>('credentials');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -78,24 +83,9 @@ export function Signup() {
       return;
     }
 
-    try {
-      setLoading(true);
-      await signup(email, password, name);
-      setStep('firm-choice');
-    } catch (error: any) {
-      const errorMessage =
-        error.code === 'auth/email-already-in-use'
-          ? 'Email already registered. Please log in instead.'
-          : error.code === 'auth/invalid-email'
-            ? 'Invalid email address'
-            : error.code === 'auth/weak-password'
-              ? 'Password is too weak'
-              : error.message || 'Signup failed. Please try again.';
-
-      setLocalError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
+    // Don't create Firebase account yet - just move to firm choice
+    // Account will be created atomically with firm creation/joining
+    setStep('firm-choice');
   };
 
   // =========================================================================
@@ -104,10 +94,14 @@ export function Signup() {
 
   const handleFirmChoice = (action: FirmAction) => {
     setFirmAction(action);
+    
+    // Pass credentials to firm forms via navigation state
+    const credentials: SignupCredentials = { email, password, name };
+    
     if (action === 'create') {
-      navigate('/create-firm');
+      navigate('/create-firm', { state: { credentials } });
     } else if (action === 'join') {
-      navigate('/join-firm');
+      navigate('/join-firm', { state: { credentials } });
     }
   };
 
@@ -292,7 +286,7 @@ export function Signup() {
                     disabled={loading}
                     className="w-full py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    {loading ? 'Creating Account...' : 'Create Account'}
+                    {'Continue to Firm Choice'}
                     {!loading && <ArrowRight className="w-5 h-5" />}
                   </button>
                 </form>
