@@ -6,6 +6,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { useDeleteDocument, useShareDocument, Document } from '@/hooks/useDocuments';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -19,6 +20,8 @@ import {
   Lock,
   Users,
   Building,
+  AlertCircle,
+  Loader,
 } from 'lucide-react';
 
 interface DocumentCardProps {
@@ -30,7 +33,9 @@ export function DocumentCard({ document, showOwner = false }: DocumentCardProps)
   const navigate = useNavigate();
   const { user } = useAuth();
   const [showMenu, setShowMenu] = useState(false);
-  const deleteDocument = useDeleteDocument();
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const deleteDocumentMutation = useDeleteDocument();
   const shareDocument = useShareDocument(document.id || document.documentId);
 
   const isOwner = document.ownerId === user?.uid;
@@ -88,10 +93,17 @@ export function DocumentCard({ document, showOwner = false }: DocumentCardProps)
   const visibilityInfo = getVisibilityInfo();
   const VisibilityIcon = visibilityInfo.icon;
 
-  const handleDelete = async () => {
-    if (!window.confirm('Are you sure you want to delete this document?')) return;
-    await deleteDocument.mutateAsync(document.id || document.documentId);
-    setShowMenu(false);
+  const handleDeleteConfirm = async () => {
+    try {
+      setIsDeleting(true);
+      await deleteDocumentMutation.mutateAsync(document.id || document.documentId);
+      toast.success('Document deleted successfully');
+      setIsDeleteConfirmOpen(false);
+    } catch (error) {
+      console.error('Delete error:', error);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleEdit = () => {
@@ -113,11 +125,11 @@ export function DocumentCard({ document, showOwner = false }: DocumentCardProps)
 
   return (
     <div
-      className="bg-white rounded-lg border border-slate-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden group"
+      className="bg-white rounded-lg border border-slate-200 shadow-sm hover:shadow-md transition-shadow group"
       onClick={handleEdit}
     >
       {/* Header with document info */}
-      <div className="p-4 border-b border-slate-100">
+      <div className="p-4 border-b border-slate-100 overflow-visible">
         <div className="flex items-start justify-between gap-3">
           {/* Document icon and title */}
           <div className="flex items-start gap-3 flex-1 min-w-0">
@@ -135,8 +147,22 @@ export function DocumentCard({ document, showOwner = false }: DocumentCardProps)
               )}
             </div>
           </div>
+          {/* Delete button - Owner only */}
+          {isOwner && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsDeleteConfirmOpen(true);
+              }}
+              className="p-1.5 hover:bg-red-100 rounded-lg transition-colors text-red-600 hover:text-red-700"
+              title="Delete document"
+              disabled={isDeleting}
+            >
+              <Trash2 size={18} />
+            </button>
+          )}
 
-          {/* Action menu button */}
+          {/* Future: Action menu button 
           <div className="relative" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={(e) => {
@@ -148,9 +174,9 @@ export function DocumentCard({ document, showOwner = false }: DocumentCardProps)
               <MoreVertical size={18} />
             </button>
 
-            {/* Action menu dropdown */}
+            {/* Action menu dropdown 
             {showMenu && (
-              <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-slate-200 z-10">
+              <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-slate-200 z-50 py-1">
                 {isOwner && (
                   <>
                     <button
@@ -158,7 +184,7 @@ export function DocumentCard({ document, showOwner = false }: DocumentCardProps)
                         e.stopPropagation();
                         handleEdit();
                       }}
-                      className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 border-b border-slate-100"
+                      className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition-colors"
                     >
                       <Edit size={16} />
                       Edit
@@ -168,7 +194,7 @@ export function DocumentCard({ document, showOwner = false }: DocumentCardProps)
                         e.stopPropagation();
                         handleShare();
                       }}
-                      className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 border-b border-slate-100"
+                      className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition-colors"
                     >
                       <Share2 size={16} />
                       Share
@@ -181,7 +207,7 @@ export function DocumentCard({ document, showOwner = false }: DocumentCardProps)
                       e.stopPropagation();
                       handleExport();
                     }}
-                    className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 border-b border-slate-100"
+                    className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition-colors"
                   >
                     <Download size={16} />
                     Export to Word
@@ -191,18 +217,19 @@ export function DocumentCard({ document, showOwner = false }: DocumentCardProps)
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleDelete();
+                      handleDeleteConfirm();
                     }}
-                    className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                    disabled={deleteDocument.isPending}
+                    className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
+                    disabled={isDeleting}
                   >
                     <Trash2 size={16} />
-                    {deleteDocument.isPending ? 'Deleting...' : 'Delete'}
+                    {isDeleting ? 'Deleting...' : 'Delete'}
                   </button>
                 )}
               </div>
             )}
           </div>
+          */}
         </div>
       </div>
 
@@ -233,6 +260,63 @@ export function DocumentCard({ document, showOwner = false }: DocumentCardProps)
           {formatDate(document.updatedAt)}
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {isDeleteConfirmOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            {/* Header */}
+            <div className="flex items-center gap-3 p-6 border-b border-gray-200 bg-red-50">
+              <AlertCircle size={24} className="text-red-600" />
+              <h2 className="text-xl font-semibold text-gray-900">Delete Document</h2>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 space-y-4">
+              <p className="text-gray-700">
+                Are you sure you want to delete <strong>"{document.title || 'Untitled Document'}"</strong>? This action cannot be undone.
+              </p>
+              <p className="text-sm text-gray-500">
+                This will permanently remove the document and all its data.
+              </p>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center gap-3 p-6 border-t border-gray-200 bg-gray-50 justify-end">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsDeleteConfirmOpen(false);
+                }}
+                disabled={isDeleting}
+                className="px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-lg transition disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteConfirm();
+                }}
+                disabled={isDeleting}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition disabled:opacity-50 flex items-center gap-2"
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader size={16} className="animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={16} />
+                    Delete Document
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

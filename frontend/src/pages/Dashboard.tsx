@@ -230,8 +230,9 @@ export function Dashboard() {
                   className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
-
-              {/* Status Filter */}
+              
+              {/* Will add back in later */}
+              {/* Status Filter 
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
@@ -241,7 +242,7 @@ export function Dashboard() {
                 <option value="draft">Draft</option>
                 <option value="final">Final</option>
                 <option value="approved">Approved</option>
-              </select>
+              </select>*/}
 
               {/* Sort */}
               <select

@@ -6,7 +6,8 @@ import {
   Download,
   ChevronLeft,
   Users,
-  MoreVertical,
+  Trash2,
+  AlertCircle,
   Loader,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -17,7 +18,7 @@ import AIRefinementSidebar from '@/components/AIRefinementSidebar';
 import { ShareDocumentModal } from '@/components/ShareDocumentModal';
 import { ExportModal } from '@/components/ExportModal';
 import { useAuth } from '@/contexts/AuthContext';
-import { useDocument, useUpdateDocument } from '@/hooks/useDocuments';
+import { useDocument, useUpdateDocument, useDeleteDocument } from '@/hooks/useDocuments';
 import { useCollaboration } from '@/hooks/useCollaboration';
 
 /**
@@ -41,6 +42,8 @@ const DocumentEditorPage: React.FC = () => {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [ydoc] = useState(() => new Y.Doc());
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const titleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -48,6 +51,7 @@ const DocumentEditorPage: React.FC = () => {
   // Data hooks
   const { data: document, isLoading } = useDocument(documentId || '');
   const { mutate: updateDocument } = useUpdateDocument(documentId || '');
+  const { mutate: deleteDocument } = useDeleteDocument();
   const { activeUsers, getActivityStatus } = useCollaboration({
     documentId: documentId || '',
     enabled: !!documentId,
@@ -177,6 +181,28 @@ const DocumentEditorPage: React.FC = () => {
   // Handle share
   const handleShare = () => {
     setIsShareModalOpen(true);
+  };
+
+  // Handle delete with confirmation
+  const handleDeleteConfirm = async () => {
+    if (!documentId) return;
+
+    try {
+      setIsDeleting(true);
+      deleteDocument(documentId, {
+        onSuccess: () => {
+          toast.success('Document deleted successfully');
+          navigate('/dashboard');
+        },
+        onError: (error: any) => {
+          toast.error('Failed to delete document');
+          console.error('Delete error:', error);
+        },
+      });
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteConfirmOpen(false);
+    }
   };
 
   // Handle go back
@@ -313,10 +339,17 @@ const DocumentEditorPage: React.FC = () => {
             </button>
             )}
 
-            {/* More menu */}
-            <button className="p-2 hover:bg-gray-100 rounded-lg transition">
-              <MoreVertical size={20} className="text-gray-600" />
+            {/* Delete button - Owner only */}
+            {isOwner && (
+            <button
+              onClick={() => setIsDeleteConfirmOpen(true)}
+              className="p-2 hover:bg-red-100 rounded-lg transition"
+              title="Delete document (Owner only)"
+              disabled={isDeleting}
+            >
+              <Trash2 size={20} className="text-red-600" />
             </button>
+            )}
           </div>
         </div>
 
@@ -378,6 +411,57 @@ const DocumentEditorPage: React.FC = () => {
           content={content}
           documentTitle={title}
         />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {isDeleteConfirmOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            {/* Header */}
+            <div className="flex items-center gap-3 p-6 border-b border-gray-200 bg-red-50">
+              <AlertCircle size={24} className="text-red-600" />
+              <h2 className="text-xl font-semibold text-gray-900">Delete Document</h2>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 space-y-4">
+              <p className="text-gray-700">
+                Are you sure you want to delete <strong>"{title}"</strong>? This action cannot be undone.
+              </p>
+              <p className="text-sm text-gray-500">
+                This will permanently remove the document and all its data.
+              </p>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center gap-3 p-6 border-t border-gray-200 bg-gray-50 justify-end">
+              <button
+                onClick={() => setIsDeleteConfirmOpen(false)}
+                disabled={isDeleting}
+                className="px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-lg transition disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                disabled={isDeleting}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition disabled:opacity-50 flex items-center gap-2"
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader size={16} className="animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={16} />
+                    Delete Document
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
