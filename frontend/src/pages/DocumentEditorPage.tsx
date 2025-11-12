@@ -314,7 +314,8 @@ const DocumentEditorPage: React.FC = () => {
               </div>
             )}
 
-            {/* Collaborative sync status */}
+            {/* TODO: Uncomment this after refining the UI/UX of the document editor page */}
+            {/* Collaborative sync status 
             {isConnected && (
               <div className="flex items-center gap-2 text-green-600" title="Real-time collaboration active">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
@@ -322,7 +323,7 @@ const DocumentEditorPage: React.FC = () => {
                   {isSyncing ? 'Syncing...' : 'Live'}
                 </span>
               </div>
-            )}
+            )}*/}
 
             {/* Action buttons */}
             <button
@@ -389,7 +390,7 @@ const DocumentEditorPage: React.FC = () => {
             ydoc={ydoc}
             onContentChange={handleContentChange}
             readOnly={!canEdit}
-            userName={user?.email?.split('@')[0] || 'Anonymous'}
+            userName={user?.name || 'Anonymous'}
             userColor={getUserColor(user?.uid || '')}
           />
         </div>
