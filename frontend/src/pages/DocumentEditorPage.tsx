@@ -46,6 +46,7 @@ const DocumentEditorPage: React.FC = () => {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [shouldInitializeContent, setShouldInitializeContent] = useState(true);
+  const [isRefinement, setIsRefinement] = useState(false);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const titleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const documentIdRef = useRef<string>('');
@@ -195,10 +196,25 @@ const DocumentEditorPage: React.FC = () => {
     [documentId, user, content, title, updateDocument]
   );
 
-  // Handle refine
+  // Handle refine - signal editor to update with refined content
   const handleRefine = (refinedContent: string) => {
+    console.log('🎨 Handling refinement:', {
+      previousLength: content.length,
+      refinedLength: refinedContent.length,
+    });
+    
+    // Set content and mark as refinement so editor updates
     setContent(refinedContent);
+    setIsRefinement(true);
+    
+    // Save to Firestore
     handleSave(refinedContent);
+  };
+
+  // Callback when refinement is applied to editor
+  const handleRefinementApplied = () => {
+    console.log('✅ Refinement applied to editor');
+    setIsRefinement(false);
   };
 
   // Handle export
@@ -415,6 +431,8 @@ const DocumentEditorPage: React.FC = () => {
             userName={user?.name || 'Anonymous'}
             userColor={getUserColor(user?.uid || '')}
             shouldInitializeContent={shouldInitializeContent}
+            isRefinement={isRefinement}
+            onRefinementApplied={handleRefinementApplied}
           />
         </div>
 

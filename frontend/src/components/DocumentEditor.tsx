@@ -28,6 +28,8 @@ interface DocumentEditorProps {
   userName?: string;
   userColor?: string;
   shouldInitializeContent?: boolean;
+  isRefinement?: boolean;
+  onRefinementApplied?: () => void;
 }
 
 /**
@@ -43,6 +45,8 @@ const DocumentEditorComponent: React.FC<DocumentEditorProps> = ({
   userName = 'Anonymous',
   userColor = '#1E2A78',
   shouldInitializeContent = true,
+  isRefinement = false,
+  onRefinementApplied,
 }) => {
   const [wordCount, setWordCount] = useState(0);
   const [charCount, setCharCount] = useState(0);
@@ -92,59 +96,83 @@ const DocumentEditorComponent: React.FC<DocumentEditorProps> = ({
     [ydoc, readOnly]
   );
 
-  // Initialize content ONCE per document
+  // Initialize content ONCE per document, or update on refinement
   // CRITICAL: Do NOT add initialContent to dependencies - that causes duplication on edits!
   // Only trigger initialization when:
   // 1. Editor is ready
   // 2. Y.js is ready (if collaborative)
-  // 3. We haven't initialized this specific document yet
-  // 4. shouldInitializeContent flag is true
+  // 3. We haven't initialized this specific document yet (shouldInitializeContent=true)
+  // 4. OR refinement flag is true (apply refined content)
   useEffect(() => {
-    if (!editor || !shouldInitializeContent) return;
+    if (!editor) return;
 
     const docId = documentId;
     const hasInitialized = initializationRef.current[docId];
 
-    if (hasInitialized) {
-      // Already initialized this document, skip
+    // If this is NOT a refinement and document is already initialized, skip
+    if (!isRefinement && hasInitialized) {
       return;
     }
 
-    console.log('🎬 Starting initialization for document:', docId);
+    // If this is a refinement but no content to apply, skip
+    if (isRefinement && (!initialContent || initialContent === '<p></p>')) {
+      return;
+    }
+
+    // If neither initialization nor refinement is needed, skip
+    if (!shouldInitializeContent && !isRefinement) {
+      return;
+    }
+
+    const logPrefix = isRefinement ? '🎨 REFINEMENT' : '🎬 INITIALIZATION';
+    console.log(logPrefix, '- Starting for document:', docId);
 
     // For collaborative mode (ydoc exists)
     if (ydoc) {
       const fragment = ydoc.getXmlFragment('default');
       
-      if (fragment.length === 0) {
-        // Y.doc is empty, initialize from Firestore
-        if (initialContent && initialContent !== '<p></p>') {
-          console.log('🎯 Setting Y.doc content from Firestore');
-          console.log('📄 Content length:', initialContent.length, 'chars');
-          editor.commands.setContent(initialContent);
-        } else {
-          console.log('⚠️ No initial content to set in Y.doc');
-        }
-      } else {
-        // Y.doc already has content from collaboration
-        console.log('✅ Y.doc already populated, skipping initialization');
+      if (fragment.length === 0 && initialContent && initialContent !== '<p></p>') {
+        // Y.doc is empty, initialize from content (first load or refinement)
+        console.log(`${logPrefix} - Setting Y.doc content`);
+        console.log('📄 Content length:', initialContent.length, 'chars');
+        editor.commands.setContent(initialContent);
+      } else if (fragment.length === 0) {
+        console.log(`${logPrefix} - No content to set in Y.doc`);
+      } else if (!isRefinement) {
+        // Y.doc already has content from collaboration (not refinement)
+        console.log('✅ Y.doc already populated');
+      } else if (isRefinement && initialContent && initialContent !== '<p></p>') {
+        // Refinement but Y.doc has content - update it
+        console.log(`${logPrefix} - Updating Y.doc with refined content`);
+        editor.commands.setContent(initialContent);
       }
 
-      // Mark as initialized regardless
-      initializationRef.current[docId] = true;
+      // Mark as initialized only if this was a true initialization
+      if (!isRefinement) {
+        initializationRef.current[docId] = true;
+      }
     } else {
       // Non-collaborative mode
       if (initialContent && initialContent !== '<p></p>') {
-        console.log('🎯 Setting editor content (non-collaborative)');
+        console.log(`${logPrefix} - Setting editor content`);
         console.log('📄 Content length:', initialContent.length, 'chars');
         editor.commands.setContent(initialContent);
       } else {
-        console.log('⚠️ No initial content provided');
+        console.log(`${logPrefix} - No content provided`);
       }
 
-      initializationRef.current[docId] = true;
+      // Mark as initialized only if this was a true initialization
+      if (!isRefinement) {
+        initializationRef.current[docId] = true;
+      }
     }
-  }, [editor, ydoc, documentId, shouldInitializeContent]);
+
+    // Signal that refinement has been applied
+    if (isRefinement && onRefinementApplied) {
+      console.log(`${logPrefix} - Applied to editor, calling callback`);
+      onRefinementApplied();
+    }
+  }, [editor, ydoc, documentId, shouldInitializeContent, isRefinement, initialContent]);
 
   // Debounced auto-save handler
   const handleAutoSave = useCallback(async () => {
