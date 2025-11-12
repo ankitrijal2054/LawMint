@@ -1,9 +1,11 @@
 import React, { useEffect, useState, useCallback, memo } from 'react';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-// import Collaboration from '@tiptap/extension-collaboration';
+import Collaboration from '@tiptap/extension-collaboration';
+// CollaborationCursor disabled - causes issues with Firebase provider
 // import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
 import * as Y from 'yjs';
+// import { useAwarenessProvider } from '@/hooks/useAwarenessProvider';
 import {
   Bold,
   Italic,
@@ -20,9 +22,10 @@ import toast from 'react-hot-toast';
 interface DocumentEditorProps {
   documentId: string;
   initialContent?: string;
-  ydoc: Y.Doc;
+  ydoc: Y.Doc | null;
   onContentChange?: (content: string) => void;
   readOnly?: boolean;
+  userName?: string;
   userColor?: string;
 }
 
@@ -36,6 +39,7 @@ const DocumentEditorComponent: React.FC<DocumentEditorProps> = ({
   ydoc,
   onContentChange,
   readOnly = false,
+  userName = 'Anonymous',
   userColor = '#1E2A78',
 }) => {
   const [wordCount, setWordCount] = useState(0);
@@ -45,25 +49,22 @@ const DocumentEditorComponent: React.FC<DocumentEditorProps> = ({
   // Track if we've already initialized content to avoid re-initializing on focus loss
   const isInitializedRef = React.useRef(false);
 
+  // NOTE: CollaborationCursor is disabled for now
+  // It requires a complex provider setup that conflicts with our Firebase implementation
+  // Content sync works without it - users just won't see each other's cursors
+
   const editor = useEditor(
     {
       extensions: [
-        StarterKit.configure({
-          // history: {
-          //   depth: 100,
-          // },
-        }),
-        // TODO: Re-enable collaboration when provider is properly set up
-        // Collaboration.configure({
-        //   document: ydoc,
-        // }),
-        // CollaborationCursor.configure({
-        //   provider: undefined, // Will be set by collaboration provider
-        //   user: {
-        //     name: 'You',
-        //     color: userColor,
-        //   },
-        // }),
+        StarterKit,
+        // Enable Y.js Collaboration only if ydoc exists
+        ...(ydoc
+          ? [
+              Collaboration.configure({
+                document: ydoc,
+              }),
+            ]
+          : []),
       ],
       content: '<p></p>', // Start empty, will set content via useEffect
       editable: !readOnly,
@@ -85,25 +86,32 @@ const DocumentEditorComponent: React.FC<DocumentEditorProps> = ({
         setIsSaving(false);
       },
     },
-    [readOnly]
+    [ydoc, readOnly]
   );
 
-  // Update editor content when initialContent changes, without losing focus
-  // Uses a ref to track initialization to prevent multiple updates
+  // Update editor content when initialContent changes (only for non-collaborative mode)
+  // When using Y.js Collaboration, the Y.doc manages content automatically
   useEffect(() => {
-    if (!editor || !initialContent) return;
+    if (!editor || !initialContent || isInitializedRef.current) return;
 
-    // Only update if content is different from current editor content
-    // This prevents re-renders when the prop hasn't actually changed
-    const currentContent = editor.getHTML();
-    const newContent = initialContent;
-
-    if (currentContent !== newContent) {
-      editor.commands.setContent(newContent);
+    // Only set content if NOT using collaboration
+    // Y.js Collaboration extension manages content automatically
+    if (!ydoc) {
+      const currentContent = editor.getHTML();
+      if (currentContent !== initialContent) {
+        editor.commands.setContent(initialContent);
+      }
+      isInitializedRef.current = true;
+    } else {
+      // For collaborative mode, check if Y.doc fragment is empty
+      const fragment = ydoc.getXmlFragment('default');
+      if (fragment.length === 0 && initialContent && initialContent !== '<p></p>') {
+        // Initialize Y.doc with content only if it's truly empty
+        editor.commands.setContent(initialContent);
+      }
+      isInitializedRef.current = true;
     }
-
-    isInitializedRef.current = true;
-  }, [editor, initialContent]);
+  }, [editor, initialContent, ydoc]);
 
   // Debounced auto-save handler
   const handleAutoSave = useCallback(async () => {

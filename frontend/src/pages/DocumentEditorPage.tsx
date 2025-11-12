@@ -20,6 +20,7 @@ import { ExportModal } from '@/components/ExportModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDocument, useUpdateDocument, useDeleteDocument } from '@/hooks/useDocuments';
 import { useCollaboration } from '@/hooks/useCollaboration';
+import { useCollaborativeEditor } from '@/hooks/useCollaborativeEditor';
 
 /**
  * Full-screen document editor page
@@ -44,7 +45,6 @@ const DocumentEditorPage: React.FC = () => {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [ydoc] = useState(() => new Y.Doc());
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const titleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -52,7 +52,13 @@ const DocumentEditorPage: React.FC = () => {
   const { data: document, isLoading } = useDocument(documentId || '');
   const { mutate: updateDocument } = useUpdateDocument(documentId || '');
   const { mutate: deleteDocument } = useDeleteDocument();
-  const { activeUsers, getActivityStatus } = useCollaboration({
+  
+  // Collaborative editing hooks
+  const { ydoc, isConnected, isSyncing } = useCollaborativeEditor({
+    documentId: documentId || '',
+    enabled: !!documentId,
+  });
+  const { activeUsers, getActivityStatus, getUserColor } = useCollaboration({
     documentId: documentId || '',
     enabled: !!documentId,
   });
@@ -308,6 +314,16 @@ const DocumentEditorPage: React.FC = () => {
               </div>
             )}
 
+            {/* Collaborative sync status */}
+            {isConnected && (
+              <div className="flex items-center gap-2 text-green-600" title="Real-time collaboration active">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                <span className="text-sm font-medium">
+                  {isSyncing ? 'Syncing...' : 'Live'}
+                </span>
+              </div>
+            )}
+
             {/* Action buttons */}
             <button
               onClick={() => handleSave()}
@@ -373,6 +389,8 @@ const DocumentEditorPage: React.FC = () => {
             ydoc={ydoc}
             onContentChange={handleContentChange}
             readOnly={!canEdit}
+            userName={user?.email?.split('@')[0] || 'Anonymous'}
+            userColor={getUserColor(user?.uid || '')}
           />
         </div>
 

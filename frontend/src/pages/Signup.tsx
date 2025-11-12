@@ -125,9 +125,6 @@ export function Signup() {
           </div>
           <span className="text-2xl font-bold text-slate-900 font-playfair">LawMint</span>
         </div>
-        <Link to="/" className="text-slate-600 hover:text-slate-900 transition-colors">
-          Back Home
-        </Link>
       </div>
 
       {/* Main Content */}
@@ -363,13 +360,13 @@ export function Signup() {
             )}
           </div>
 
-          {/* Footer Text */}
+          {/* Footer Text 
           <p className="text-center text-slate-600 text-xs mt-8">
             Need help?{' '}
             <a href="mailto:support@lawmint.com" className="text-blue-600 hover:underline">
               Contact support
             </a>
-          </p>
+          </p>*/}
         </div>
       </div>
     </div>
