@@ -346,7 +346,7 @@ expressApp.put('/documents/:documentId', verifyToken, async (req, res) => {
     try {
         const uid = req.user.uid;
         const { documentId } = req.params;
-        const { content, status } = req.body;
+        const { title, content, status } = req.body;
         const docSnap = await db.collection('documents').doc(documentId).get();
         if (!docSnap.exists) {
             return res.status(404).json({
@@ -376,6 +376,9 @@ expressApp.put('/documents/:documentId', verifyToken, async (req, res) => {
             updatedAt: firestore_1.FieldValue.serverTimestamp(),
             'metadata.lastEditedBy': uid,
         };
+        if (title !== undefined && title.trim()) {
+            updateData.title = title.trim();
+        }
         if (content !== undefined) {
             updateData.content = content;
             updateData['metadata.wordCount'] = content.split(/\s+/).length;

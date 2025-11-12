@@ -442,6 +442,7 @@ class ApiClient {
   async updateDocument(
     documentId: string,
     data: {
+      title?: string;
       content?: string;
       status?: 'draft' | 'final' | 'approved';
     }

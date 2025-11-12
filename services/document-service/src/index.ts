@@ -347,7 +347,7 @@ expressApp.put('/documents/:documentId', verifyToken, async (req: Request, res: 
   try {
     const uid = (req as any).user.uid;
     const { documentId } = req.params;
-    const { content, status } = req.body;
+    const { title, content, status } = req.body;
 
     const docSnap = await db.collection('documents').doc(documentId).get();
 
@@ -384,6 +384,10 @@ expressApp.put('/documents/:documentId', verifyToken, async (req: Request, res: 
       updatedAt: FieldValue.serverTimestamp(),
       'metadata.lastEditedBy': uid,
     };
+
+    if (title !== undefined && title.trim()) {
+      updateData.title = title.trim();
+    }
 
     if (content !== undefined) {
       updateData.content = content;
