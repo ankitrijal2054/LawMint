@@ -67,6 +67,7 @@ const defaultOrigins = [
     'http://localhost:5173',
     'http://127.0.0.1:5173',
     'https://lawmint.web.app',
+    'https://lawmint-c5a21.web.app',
 ];
 const corsOrigins = process.env.ALLOWED_ORIGINS?.split(',').map((origin) => origin.trim()).filter(Boolean) ??
     defaultOrigins;
@@ -285,6 +286,7 @@ expressApp.post('/auth/createFirm', verifyToken, async (req, res) => {
             members: {
                 [uid]: {
                     name: userFullName.trim(),
+                    email: email,
                     role: 'admin',
                     joinedAt: now,
                 },
@@ -374,6 +376,7 @@ expressApp.post('/auth/joinFirm', verifyToken, async (req, res) => {
         const updatedMembers = firmData.members || {};
         updatedMembers[uid] = {
             name: userFullName.trim(),
+            email: email,
             role,
             joinedAt: now,
         };

@@ -221,6 +221,7 @@ class ApiClient {
         string,
         {
           name: string;
+          email?: string;
           role: string;
           joinedAt: number;
         }
@@ -228,7 +229,19 @@ class ApiClient {
     }>
   > {
     const url = `${import.meta.env.VITE_AUTH_SERVICE_URL}/auth/firm/${firmId}/members`;
-    return this.request(url, 'GET');
+    console.log(`[API] Fetching firm members from: ${url}`);
+    const response = await this.request<{
+      members: Record<
+        string,
+        {
+          name: string;
+          email?: string;
+          role: string;
+          joinedAt: number;
+        }
+      >;
+    }>(url, 'GET');
+    return response;
   }
 
   /**
@@ -238,6 +251,390 @@ class ApiClient {
   async healthCheck(): Promise<ApiResponse<{ message: string }>> {
     const url = `${import.meta.env.VITE_AUTH_SERVICE_URL}/health`;
     return this.requestUnauthenticated(url, 'GET');
+  }
+
+  // =========================================================================
+  // TEMPLATE ENDPOINTS
+  // =========================================================================
+
+  /**
+   * POST /templates/upload
+   * Upload a new template file (PDF/DOCX)
+   */
+  async uploadTemplate(payload: {
+    templateName: string;
+    fileName: string;
+    fileData: string; // base64 encoded file data
+  }): Promise<
+    ApiResponse<{
+      id: string;
+      name: string;
+      type: 'firm-specific';
+      content: string;
+      metadata: {
+        originalFileName: string;
+        fileType: 'pdf' | 'docx';
+        uploadedBy: string;
+        size: number;
+      };
+      createdAt: number;
+      updatedAt: number;
+    }>
+  > {
+    const url = `${import.meta.env.VITE_TEMPLATE_SERVICE_URL}/templates/upload`;
+    return this.request(url, 'POST', payload);
+  }
+
+  /**
+   * GET /templates/global
+   * Get all global templates (accessible to all authenticated users)
+   */
+  async getGlobalTemplates(): Promise<
+    ApiResponse<
+      Array<{
+        id: string;
+        name: string;
+        type: 'global';
+        content: string;
+        metadata: {
+          originalFileName: string;
+          fileType: 'pdf' | 'docx';
+          uploadedBy: string;
+          size: number;
+        };
+        createdAt: number;
+        updatedAt: number;
+      }>
+    >
+  > {
+    const url = `${import.meta.env.VITE_TEMPLATE_SERVICE_URL}/templates/global`;
+    return this.request(url, 'GET');
+  }
+
+  /**
+   * GET /templates/firm/:firmId
+   * Get all templates for a specific firm
+   */
+  async getFirmTemplates(firmId: string): Promise<
+    ApiResponse<
+      Array<{
+        id: string;
+        name: string;
+        type: 'firm-specific';
+        content: string;
+        metadata: {
+          originalFileName: string;
+          fileType: 'pdf' | 'docx';
+          uploadedBy: string;
+          size: number;
+        };
+        createdAt: number;
+        updatedAt: number;
+      }>
+    >
+  > {
+    const url = `${import.meta.env.VITE_TEMPLATE_SERVICE_URL}/templates/firm/${firmId}`;
+    return this.request(url, 'GET');
+  }
+
+  /**
+   * GET /templates/:templateId
+   * Get a single template by ID
+   */
+  async getTemplate(templateId: string): Promise<
+    ApiResponse<{
+      id: string;
+      name: string;
+      type: 'global' | 'firm-specific';
+      firmId?: string;
+      content: string;
+      metadata: {
+        originalFileName: string;
+        fileType: 'pdf' | 'docx';
+        uploadedBy: string;
+        size: number;
+      };
+      createdAt: number;
+      updatedAt: number;
+    }>
+  > {
+    const url = `${import.meta.env.VITE_TEMPLATE_SERVICE_URL}/templates/${templateId}`;
+    return this.request(url, 'GET');
+  }
+
+  /**
+   * DELETE /templates/:templateId
+   * Delete a firm template (Admin/Lawyer only)
+   */
+  async deleteTemplate(templateId: string): Promise<
+    ApiResponse<{
+      message: string;
+    }>
+  > {
+    const url = `${import.meta.env.VITE_TEMPLATE_SERVICE_URL}/templates/${templateId}`;
+    return this.request(url, 'DELETE');
+  }
+
+  /**
+   * GET /templates/:templateId/download
+   * Get a signed download URL for a template file
+   */
+  async downloadTemplate(
+    templateId: string,
+    firmId?: string
+  ): Promise<
+    ApiResponse<{
+      downloadUrl: string;
+      fileName: string;
+    }>
+  > {
+    const url = new URL(
+      `${import.meta.env.VITE_TEMPLATE_SERVICE_URL}/templates/${templateId}/download`
+    );
+    if (firmId) {
+      url.searchParams.append('firmId', firmId);
+    }
+    return this.request(url.toString(), 'GET');
+  }
+
+  // ============================================================================
+  // DOCUMENT SERVICE ENDPOINTS
+  // ============================================================================
+
+  /**
+   * POST /documents
+   * Create a new document
+   */
+  async createDocument(data: {
+    title: string;
+    firmId: string;
+    templateId?: string;
+    sourceDocuments?: unknown[];
+    visibility?: 'private' | 'shared' | 'firm-wide';
+    content?: string;
+  }): Promise<
+    ApiResponse<{
+      documentId: string;
+      document: unknown;
+    }>
+  > {
+    const url = `${import.meta.env.VITE_DOCUMENT_SERVICE_URL}/documents`;
+    return this.request(url, 'POST', data);
+  }
+
+  /**
+   * GET /documents/:documentId
+   * Get a specific document
+   */
+  async getDocument(documentId: string): Promise<
+    ApiResponse<{
+      document: unknown;
+    }>
+  > {
+    const url = `${import.meta.env.VITE_DOCUMENT_SERVICE_URL}/documents/${documentId}`;
+    return this.request(url, 'GET');
+  }
+
+  /**
+   * PUT /documents/:documentId
+   * Update a document's content
+   */
+  async updateDocument(
+    documentId: string,
+    data: {
+      title?: string;
+      content?: string;
+      status?: 'draft' | 'final' | 'approved';
+    }
+  ): Promise<
+    ApiResponse<{
+      message: string;
+    }>
+  > {
+    const url = `${import.meta.env.VITE_DOCUMENT_SERVICE_URL}/documents/${documentId}`;
+    return this.request(url, 'PUT', data);
+  }
+
+  /**
+   * DELETE /documents/:documentId
+   * Delete a document
+   */
+  async deleteDocument(documentId: string): Promise<
+    ApiResponse<{
+      message: string;
+    }>
+  > {
+    const url = `${import.meta.env.VITE_DOCUMENT_SERVICE_URL}/documents/${documentId}`;
+    return this.request(url, 'DELETE');
+  }
+
+  /**
+   * GET /documents/user/:uid
+   * List user's documents
+   */
+  async getUserDocuments(uid: string): Promise<
+    ApiResponse<{
+      count: number;
+      documents: unknown[];
+    }>
+  > {
+    const url = `${import.meta.env.VITE_DOCUMENT_SERVICE_URL}/documents/user/${uid}`;
+    return this.request(url, 'GET');
+  }
+
+  /**
+   * GET /documents/firm/:firmId
+   * List firm-wide documents
+   */
+  async getFirmDocuments(firmId: string): Promise<
+    ApiResponse<{
+      count: number;
+      documents: unknown[];
+    }>
+  > {
+    const url = `${import.meta.env.VITE_DOCUMENT_SERVICE_URL}/documents/firm/${firmId}`;
+    return this.request(url, 'GET');
+  }
+
+  /**
+   * GET /documents/shared/:uid
+   * List documents shared with user
+   */
+  async getSharedDocuments(uid: string): Promise<
+    ApiResponse<{
+      count: number;
+      documents: unknown[];
+    }>
+  > {
+    const url = `${import.meta.env.VITE_DOCUMENT_SERVICE_URL}/documents/shared/${uid}`;
+    return this.request(url, 'GET');
+  }
+
+  /**
+   * POST /documents/:documentId/share
+   * Update document sharing settings
+   */
+  async shareDocument(
+    documentId: string,
+    data: {
+      visibility: 'private' | 'shared' | 'firm-wide';
+      sharedWith?: string[];
+    }
+  ): Promise<
+    ApiResponse<{
+      message: string;
+    }>
+  > {
+    const url = `${import.meta.env.VITE_DOCUMENT_SERVICE_URL}/documents/${documentId}/share`;
+    return this.request(url, 'POST', data);
+  }
+
+  /**
+   * POST /documents/upload-sources
+   * Upload and extract source documents
+   */
+  async uploadSources(data: {
+    documentId?: string;
+    files: {
+      filename: string;
+      data: string; // base64 encoded
+    }[];
+  }): Promise<
+    ApiResponse<{
+      extractedTexts: string[];
+      sourceDocuments: {
+        fileName: string;
+        fileType: 'pdf' | 'docx';
+        storagePath: string;
+        extractedText: string;
+        uploadedAt: unknown;
+        uploadedBy: string;
+      }[];
+    }>
+  > {
+    const url = `${import.meta.env.VITE_DOCUMENT_SERVICE_URL}/documents/upload-sources`;
+    return this.request(url, 'POST', data);
+  }
+
+  // ============================================================================
+  // AI SERVICE ENDPOINTS
+  // ============================================================================
+
+  /**
+   * POST /ai/generate
+   * Generate a demand letter draft
+   */
+  async generateDocument(data: {
+    templateId?: string;
+    templateContent?: string;
+    sourceTexts: string[];
+    customInstructions?: string;
+  }): Promise<
+    ApiResponse<{
+      content: string;
+      model: string;
+    }>
+  > {
+    const url = `${import.meta.env.VITE_AI_SERVICE_URL}/ai/generate`;
+    return this.request(url, 'POST', data);
+  }
+
+  /**
+   * POST /ai/refine
+   * Refine an existing document
+   */
+  async refineDocument(data: {
+    content: string;
+    refinementInstructions: string;
+  }): Promise<
+    ApiResponse<{
+      content: string;
+      model: string;
+    }>
+  > {
+    const url = `${import.meta.env.VITE_AI_SERVICE_URL}/ai/refine`;
+    return this.request(url, 'POST', data);
+  }
+
+  // ========================================================================
+  // EXPORT SERVICE
+  // ========================================================================
+
+  /**
+   * POST /export/docx
+   * Export document to DOCX format
+   * Returns binary DOCX file directly
+   */
+  async exportDocumentToDOCX(data: {
+    documentId: string;
+    content: string;
+    title?: string;
+  }): Promise<Blob> {
+    try {
+      const token = await this.getAuthToken();
+
+      const response = await fetch(
+        `${import.meta.env.VITE_EXPORT_SERVICE_URL}/export/docx`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(data),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Export failed: ${response.status}`);
+      }
+
+      return await response.blob();
+    } catch (error: any) {
+      console.error('Export error:', error);
+      throw error;
+    }
   }
 }
 

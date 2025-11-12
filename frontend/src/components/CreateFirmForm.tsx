@@ -1,13 +1,15 @@
 /**
  * Create Firm Form Component
  * Allows users to create a new firm and receive a unique firm code
+ * IMPORTANT: This creates the Firebase account AND firm atomically
  */
 
-import { useState, FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, FormEvent, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { FileText, ArrowRight, Copy, CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import type { SignupCredentials } from '@/pages/Signup';
 
 interface CreateFirmFormProps {
   onSuccess?: (firmId: string, firmCode: string) => void;
@@ -15,16 +17,33 @@ interface CreateFirmFormProps {
 
 export function CreateFirmForm({ onSuccess }: CreateFirmFormProps) {
   const navigate = useNavigate();
-  const { createFirm, loading } = useAuth();
+  const location = useLocation();
+  const { signupAndCreateFirm, loading } = useAuth();
+
+  // Get credentials from navigation state
+  const credentials = (location.state as { credentials?: SignupCredentials })?.credentials;
 
   const [firmName, setFirmName] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
   const [result, setResult] = useState<{ firmId: string; firmCode: string } | null>(null);
   const [copied, setCopied] = useState(false);
 
+  // Redirect if no credentials provided
+  useEffect(() => {
+    if (!credentials) {
+      toast.error('Please complete signup first');
+      navigate('/signup');
+    }
+  }, [credentials, navigate]);
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLocalError(null);
+
+    if (!credentials) {
+      setLocalError('Missing signup credentials. Please restart signup process.');
+      return;
+    }
 
     if (!firmName.trim()) {
       setLocalError('Please enter a firm name');
@@ -37,14 +56,29 @@ export function CreateFirmForm({ onSuccess }: CreateFirmFormProps) {
     }
 
     try {
-      const { firmId, firmCode } = await createFirm(firmName);
+      // Create account AND firm atomically
+      const { firmId, firmCode } = await signupAndCreateFirm(
+        credentials.email,
+        credentials.password,
+        credentials.name,
+        firmName
+      );
       setResult({ firmId, firmCode });
 
       if (onSuccess) {
         onSuccess(firmId, firmCode);
       }
     } catch (error: any) {
-      setLocalError(error.message || 'Failed to create firm');
+      const errorMessage =
+        error.code === 'auth/email-already-in-use'
+          ? 'Email already registered. Please log in instead.'
+          : error.code === 'auth/invalid-email'
+            ? 'Invalid email address'
+            : error.code === 'auth/weak-password'
+              ? 'Password is too weak'
+              : error.message || 'Failed to create account and firm';
+      
+      setLocalError(errorMessage);
     }
   };
 
@@ -209,7 +243,7 @@ export function CreateFirmForm({ onSuccess }: CreateFirmFormProps) {
                 disabled={loading}
                 className="w-full py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                {loading ? 'Creating Firm...' : 'Create Firm'}
+                {loading ? 'Creating Firm...' : 'Create Account and Firm'}
                 {!loading && <ArrowRight className="w-5 h-5" />}
               </button>
 

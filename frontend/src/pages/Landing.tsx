@@ -177,7 +177,7 @@ export function Landing() {
                 </div>
                 <div className="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
                   <p className="text-sm text-slate-400">Template Library</p>
-                  <p className="text-3xl font-bold text-amber-400">50+</p>
+                  <p className="text-3xl font-bold text-amber-400">10</p>
                 </div>
                 <div className="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
                   <p className="text-sm text-slate-400">Firms Using LawMint</p>

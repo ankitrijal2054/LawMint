@@ -54,9 +54,6 @@ export function Login() {
           </div>
           <span className="text-2xl font-bold text-slate-900 font-playfair">LawMint</span>
         </div>
-        <Link to="/" className="text-slate-600 hover:text-slate-900 transition-colors">
-          Back Home
-        </Link>
       </div>
 
       {/* Main Content */}

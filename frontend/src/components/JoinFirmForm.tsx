@@ -1,13 +1,15 @@
 /**
  * Join Firm Form Component
  * Allows users to join an existing firm using a firm code
+ * IMPORTANT: This creates the Firebase account AND joins firm atomically
  */
 
-import { useState, FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, FormEvent, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { FileText, ArrowRight, CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import type { SignupCredentials } from '@/pages/Signup';
 
 interface JoinFirmFormProps {
   onSuccess?: (firmId: string) => void;
@@ -15,16 +17,33 @@ interface JoinFirmFormProps {
 
 export function JoinFirmForm({ onSuccess }: JoinFirmFormProps) {
   const navigate = useNavigate();
-  const { joinFirm, loading } = useAuth();
+  const location = useLocation();
+  const { signupAndJoinFirm, loading } = useAuth();
+
+  // Get credentials from navigation state
+  const credentials = (location.state as { credentials?: SignupCredentials })?.credentials;
 
   const [firmCode, setFirmCode] = useState('');
   const [role, setRole] = useState<'lawyer' | 'paralegal'>('lawyer');
   const [localError, setLocalError] = useState<string | null>(null);
   const [result, setResult] = useState<{ firmId: string } | null>(null);
 
+  // Redirect if no credentials provided
+  useEffect(() => {
+    if (!credentials) {
+      toast.error('Please complete signup first');
+      navigate('/signup');
+    }
+  }, [credentials, navigate]);
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLocalError(null);
+
+    if (!credentials) {
+      setLocalError('Missing signup credentials. Please restart signup process.');
+      return;
+    }
 
     if (!firmCode.trim()) {
       setLocalError('Please enter a firm code');
@@ -44,7 +63,14 @@ export function JoinFirmForm({ onSuccess }: JoinFirmFormProps) {
     }
 
     try {
-      const { firmId } = await joinFirm(firmCode.toUpperCase(), role);
+      // Create account AND join firm atomically
+      const { firmId } = await signupAndJoinFirm(
+        credentials.email,
+        credentials.password,
+        credentials.name,
+        firmCode.toUpperCase(),
+        role
+      );
       setResult({ firmId });
 
       if (onSuccess) {
@@ -52,11 +78,17 @@ export function JoinFirmForm({ onSuccess }: JoinFirmFormProps) {
       }
     } catch (error: any) {
       const errorMessage =
-        error.message?.includes('Invalid firm code')
-          ? 'Invalid firm code. Please check with your firm administrator.'
-          : error.message?.includes('already a member')
-            ? 'You are already a member of this firm.'
-            : error.message || 'Failed to join firm';
+        error.code === 'auth/email-already-in-use'
+          ? 'Email already registered. Please log in instead.'
+          : error.code === 'auth/invalid-email'
+            ? 'Invalid email address'
+            : error.code === 'auth/weak-password'
+              ? 'Password is too weak'
+            : error.message?.includes('Invalid firm code')
+              ? 'Invalid firm code. Please check with your firm administrator.'
+              : error.message?.includes('already a member')
+                ? 'You are already a member of this firm.'
+                : error.message || 'Failed to create account and join firm';
 
       setLocalError(errorMessage);
     }
@@ -227,7 +259,7 @@ export function JoinFirmForm({ onSuccess }: JoinFirmFormProps) {
                 disabled={loading}
                 className="w-full py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                {loading ? 'Joining Firm...' : 'Join Firm'}
+                {loading ? 'Joining Firm...' : 'Create Account and Join Firm'}
                 {!loading && <ArrowRight className="w-5 h-5" />}
               </button>
 

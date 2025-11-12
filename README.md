@@ -223,10 +223,17 @@ npm run format
 
 ## 🚢 Deployment
 
-### Deploy to Firebase
+### Production Deployment
 
-**Deploy All Services & Hosting**
+**⚠️ Important:** Before deploying to production, read `PRODUCTION_SETUP.md` for complete setup instructions.
+
+Quick deployment (if already set up):
+
 ```bash
+# 1. Build all services
+bash scripts/build-all.sh
+
+# 2. Deploy everything
 firebase deploy
 ```
 
@@ -239,10 +246,16 @@ firebase deploy --only functions:aiService
 firebase deploy --only functions:exportService
 ```
 
-**Deploy Firestore Rules**
+**Deploy Rules Only**
 ```bash
-firebase deploy --only firestore:rules
+firebase deploy --only firestore:rules database:rules storage:rules
 ```
+
+### Documentation
+
+- **`PRODUCTION_SETUP.md`** - Complete production setup guide with Firebase project creation
+- **`DEPLOYMENT_GUIDE.md`** - Step-by-step deployment instructions with troubleshooting
+- **`scripts/build-all.sh`** - Automated build script for all services
 
 ---
 
