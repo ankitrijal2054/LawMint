@@ -60,7 +60,8 @@ export function useDocument(documentId: string | null) {
       return response.data?.document as Document;
     },
     enabled: !!documentId,
-    staleTime: 30000, // 30 seconds
+    staleTime: 5 * 60 * 1000, // 5 minutes - keep document data fresh but avoid excessive refetches
+    gcTime: 10 * 60 * 1000, // 10 minutes - keep in cache longer
     retry: 2,
   });
 }

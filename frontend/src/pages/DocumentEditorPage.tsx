@@ -45,8 +45,10 @@ const DocumentEditorPage: React.FC = () => {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [shouldInitializeContent, setShouldInitializeContent] = useState(true);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const titleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const documentIdRef = useRef<string>('');
 
   // Data hooks
   const { data: document, isLoading } = useDocument(documentId || '');
@@ -63,13 +65,33 @@ const DocumentEditorPage: React.FC = () => {
     enabled: !!documentId,
   });
 
-  // Load document on mount
+  // When documentId changes, mark that we should initialize content
   useEffect(() => {
-    if (document) {
+    if (documentId && documentId !== documentIdRef.current) {
+      console.log('📄 Document ID changed, enabling initialization');
+      documentIdRef.current = documentId;
+      setShouldInitializeContent(true);
+    }
+  }, [documentId]);
+
+  // Load document data and set it for initialization
+  // IMPORTANT: Only set content state on first document load, not on every fetch
+  useEffect(() => {
+    if (document && shouldInitializeContent) {
+      console.log('📋 Document fetched, setting initial state:', {
+        id: document.id,
+        title: document.title,
+        contentLength: document.content?.length || 0,
+      });
+      
       setTitle(document.title || 'Untitled Document');
       setContent(document.content || '');
+      
+      // After setting initial content, disable further initializations
+      // User edits should not trigger re-initialization
+      setShouldInitializeContent(false);
     }
-  }, [document]);
+  }, [document?.id]);
 
   // Handle title change with debounced auto-save (silent)
   const handleTitleChange = (newTitle: string) => {
@@ -392,6 +414,7 @@ const DocumentEditorPage: React.FC = () => {
             readOnly={!canEdit}
             userName={user?.name || 'Anonymous'}
             userColor={getUserColor(user?.uid || '')}
+            shouldInitializeContent={shouldInitializeContent}
           />
         </div>
 

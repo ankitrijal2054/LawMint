@@ -27,6 +27,7 @@ interface DocumentEditorProps {
   readOnly?: boolean;
   userName?: string;
   userColor?: string;
+  shouldInitializeContent?: boolean;
 }
 
 /**
@@ -41,13 +42,15 @@ const DocumentEditorComponent: React.FC<DocumentEditorProps> = ({
   readOnly = false,
   userName = 'Anonymous',
   userColor = '#1E2A78',
+  shouldInitializeContent = true,
 }) => {
   const [wordCount, setWordCount] = useState(0);
   const [charCount, setCharCount] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Track if we've already initialized content to avoid re-initializing on focus loss
-  const isInitializedRef = React.useRef(false);
+  // Track initialization per specific document (not per component instance)
+  // This prevents duplicate content on reloads
+  const initializationRef = React.useRef<Record<string, boolean>>({});
 
   // NOTE: CollaborationCursor is disabled for now
   // It requires a complex provider setup that conflicts with our Firebase implementation
@@ -89,29 +92,59 @@ const DocumentEditorComponent: React.FC<DocumentEditorProps> = ({
     [ydoc, readOnly]
   );
 
-  // Update editor content when initialContent changes (only for non-collaborative mode)
-  // When using Y.js Collaboration, the Y.doc manages content automatically
+  // Initialize content ONCE per document
+  // CRITICAL: Do NOT add initialContent to dependencies - that causes duplication on edits!
+  // Only trigger initialization when:
+  // 1. Editor is ready
+  // 2. Y.js is ready (if collaborative)
+  // 3. We haven't initialized this specific document yet
+  // 4. shouldInitializeContent flag is true
   useEffect(() => {
-    if (!editor || !initialContent || isInitializedRef.current) return;
+    if (!editor || !shouldInitializeContent) return;
 
-    // Only set content if NOT using collaboration
-    // Y.js Collaboration extension manages content automatically
-    if (!ydoc) {
-      const currentContent = editor.getHTML();
-      if (currentContent !== initialContent) {
-        editor.commands.setContent(initialContent);
-      }
-      isInitializedRef.current = true;
-    } else {
-      // For collaborative mode, check if Y.doc fragment is empty
-      const fragment = ydoc.getXmlFragment('default');
-      if (fragment.length === 0 && initialContent && initialContent !== '<p></p>') {
-        // Initialize Y.doc with content only if it's truly empty
-        editor.commands.setContent(initialContent);
-      }
-      isInitializedRef.current = true;
+    const docId = documentId;
+    const hasInitialized = initializationRef.current[docId];
+
+    if (hasInitialized) {
+      // Already initialized this document, skip
+      return;
     }
-  }, [editor, initialContent, ydoc]);
+
+    console.log('🎬 Starting initialization for document:', docId);
+
+    // For collaborative mode (ydoc exists)
+    if (ydoc) {
+      const fragment = ydoc.getXmlFragment('default');
+      
+      if (fragment.length === 0) {
+        // Y.doc is empty, initialize from Firestore
+        if (initialContent && initialContent !== '<p></p>') {
+          console.log('🎯 Setting Y.doc content from Firestore');
+          console.log('📄 Content length:', initialContent.length, 'chars');
+          editor.commands.setContent(initialContent);
+        } else {
+          console.log('⚠️ No initial content to set in Y.doc');
+        }
+      } else {
+        // Y.doc already has content from collaboration
+        console.log('✅ Y.doc already populated, skipping initialization');
+      }
+
+      // Mark as initialized regardless
+      initializationRef.current[docId] = true;
+    } else {
+      // Non-collaborative mode
+      if (initialContent && initialContent !== '<p></p>') {
+        console.log('🎯 Setting editor content (non-collaborative)');
+        console.log('📄 Content length:', initialContent.length, 'chars');
+        editor.commands.setContent(initialContent);
+      } else {
+        console.log('⚠️ No initial content provided');
+      }
+
+      initializationRef.current[docId] = true;
+    }
+  }, [editor, ydoc, documentId, shouldInitializeContent]);
 
   // Debounced auto-save handler
   const handleAutoSave = useCallback(async () => {
