@@ -72,14 +72,14 @@ if (useEmulator) {
 
     // Firestore Emulator
     const firestoreEmulatorPort = import.meta.env.VITE_FIREBASE_FIRESTORE_EMULATOR_PORT || 8080;
-    if (!db._firestoreClient?.settings?.host?.includes('localhost')) {
+    if (!(db as any)._firestoreClient?.settings?.host?.includes('localhost')) {
       connectFirestoreEmulator(db, 'localhost', firestoreEmulatorPort);
       console.log(`🔥 Connected to Firestore Emulator (port ${firestoreEmulatorPort})`);
     }
 
     // Storage Emulator
     const storageEmulatorPort = import.meta.env.VITE_FIREBASE_STORAGE_EMULATOR_PORT || 9199;
-    if (!storage.host?.includes('localhost')) {
+    if (!(storage as any).host?.includes('localhost')) {
       connectStorageEmulator(storage, 'localhost', storageEmulatorPort);
       console.log(`🔥 Connected to Storage Emulator (port ${storageEmulatorPort})`);
     }

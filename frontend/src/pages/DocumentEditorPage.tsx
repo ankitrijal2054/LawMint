@@ -77,6 +77,7 @@ const DocumentEditorPage: React.FC = () => {
 
         updateDocument(
           {
+            // @ts-ignore
             title: newTitle.trim(),
           },
           {

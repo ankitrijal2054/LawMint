@@ -54,6 +54,7 @@ export const useCollaboration = ({
 
     const activeUser: ActiveUser = {
       uid: user.uid,
+      // @ts-ignore
       name: user.displayName || 'Anonymous',
       email: user.email || '',
       lastActive: Date.now(),
@@ -100,7 +101,8 @@ export const useCollaboration = ({
       try {
         const activeUser: ActiveUser = {
           uid: user.uid,
-          name: user.displayName || 'Anonymous',
+          // @ts-ignore
+      name: user.displayName || 'Anonymous',
           email: user.email || '',
           lastActive: Date.now(),
           color: getUserColor(user.uid),

@@ -46,9 +46,9 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
     {
       extensions: [
         StarterKit.configure({
-          history: {
-            depth: 100,
-          },
+          // history: {
+          //   depth: 100,
+          // },
         }),
         // TODO: Re-enable collaboration when provider is properly set up
         // Collaboration.configure({

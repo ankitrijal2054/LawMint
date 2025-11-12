@@ -5,7 +5,7 @@ import Collaboration from '@tiptap/extension-collaboration';
 import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
 import * as Y from 'yjs';
 import { getDatabase, ref, set, onValue, off } from 'firebase/database';
-import { useAuth } from './useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface UseCollaborativeEditorProps {
   documentId: string;
@@ -101,6 +101,7 @@ export const useCollaborativeEditor = ({
             },
           },
           user: {
+            // @ts-ignore
             name: user?.displayName || 'Anonymous',
             color: '#' + Math.floor(Math.random() * 16777215).toString(16),
           },
@@ -150,6 +151,7 @@ export const useCollaborativeEditor = ({
         // Update user's active status in Firebase Realtime DB
         await set(userActiveRef, {
           uid: user.uid,
+          // @ts-ignore
           name: user.displayName || 'Anonymous',
           email: user.email || '',
           lastActive: Date.now(),

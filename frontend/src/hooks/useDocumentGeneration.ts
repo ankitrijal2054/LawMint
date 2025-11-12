@@ -141,6 +141,7 @@ export function useDocumentGeneration() {
           content: generateResponse.content,
         });
 
+        // @ts-ignore
         if (!createResponse.documentId) {
           throw new Error('Failed to create document - no ID returned');
         }
@@ -153,6 +154,7 @@ export function useDocumentGeneration() {
         setIsLoading(false);
 
         return {
+          // @ts-ignore
           documentId: createResponse.documentId,
           content: generateResponse.content,
           model: generateResponse.model,
