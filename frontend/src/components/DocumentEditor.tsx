@@ -276,22 +276,37 @@ const DocumentEditorComponent: React.FC<DocumentEditorProps> = ({
         <div className="max-w-4xl mx-auto">
           <EditorContent
             editor={editor}
-            className="prose prose-sm max-w-none
+            className="prose prose-base max-w-none
+              font-body text-gray-900
               [&_.ProseMirror]:focus:outline-none
-              [&_.ProseMirror]:text-lg
-              [&_.ProseMirror]:line-height-relaxed
-              [&_.ProseMirror_p]:my-4
-              [&_.ProseMirror_h1]:text-3xl [&_.ProseMirror_h1]:font-bold [&_.ProseMirror_h1]:my-4
-              [&_.ProseMirror_h2]:text-2xl [&_.ProseMirror_h2]:font-bold [&_.ProseMirror_h2]:my-3
-              [&_.ProseMirror_h3]:text-xl [&_.ProseMirror_h3]:font-bold [&_.ProseMirror_h3]:my-2
-              [&_.ProseMirror_ul]:list-disc [&_.ProseMirror_ul]:ml-6 [&_.ProseMirror_ul]:my-2
-              [&_.ProseMirror_ol]:list-decimal [&_.ProseMirror_ol]:ml-6 [&_.ProseMirror_ol]:my-2
-              [&_.ProseMirror_li]:my-1
+              [&_.ProseMirror]:text-base
+              [&_.ProseMirror]:leading-relaxed
+              
+              [&_.ProseMirror_p]:mb-5
+              [&_.ProseMirror_p]:leading-relaxed
+              
+              [&_.ProseMirror_h1]:text-3xl [&_.ProseMirror_h1]:font-bold [&_.ProseMirror_h1]:mb-6 [&_.ProseMirror_h1]:mt-8 [&_.ProseMirror_h1]:leading-tight
+              [&_.ProseMirror_h2]:text-2xl [&_.ProseMirror_h2]:font-bold [&_.ProseMirror_h2]:mb-4 [&_.ProseMirror_h2]:mt-6 [&_.ProseMirror_h2]:leading-tight
+              [&_.ProseMirror_h3]:text-xl [&_.ProseMirror_h3]:font-semibold [&_.ProseMirror_h3]:mb-3 [&_.ProseMirror_h3]:mt-4 [&_.ProseMirror_h3]:leading-tight
+              
+              [&_.ProseMirror_ul]:list-disc [&_.ProseMirror_ul]:ml-8 [&_.ProseMirror_ul]:my-4 [&_.ProseMirror_ul]:space-y-2
+              [&_.ProseMirror_ol]:list-decimal [&_.ProseMirror_ol]:ml-8 [&_.ProseMirror_ol]:my-4 [&_.ProseMirror_ol]:space-y-2
+              [&_.ProseMirror_li]:my-2 [&_.ProseMirror_li]:leading-relaxed
+              [&_.ProseMirror_li>p]:mb-2
+              
               [&_.ProseMirror_strong]:font-bold
               [&_.ProseMirror_em]:italic
               [&_.ProseMirror_s]:line-through
-              [&_.ProseMirror_code]:bg-gray-100 [&_.ProseMirror_code]:px-2 [&_.ProseMirror_code]:py-1 [&_.ProseMirror_code]:rounded
-              [&_.ProseMirror_blockquote]:border-l-4 [&_.ProseMirror_blockquote]:border-gray-300 [&_.ProseMirror_blockquote]:pl-4 [&_.ProseMirror_blockquote]:my-2
+              
+              [&_.ProseMirror_code]:bg-gray-100 [&_.ProseMirror_code]:px-2 [&_.ProseMirror_code]:py-1 [&_.ProseMirror_code]:rounded [&_.ProseMirror_code]:font-mono [&_.ProseMirror_code]:text-sm
+              
+              [&_.ProseMirror_blockquote]:border-l-4 [&_.ProseMirror_blockquote]:border-gray-400 [&_.ProseMirror_blockquote]:pl-4 [&_.ProseMirror_blockquote]:my-4 [&_.ProseMirror_blockquote]:italic
+              
+              [&_.ProseMirror_hr]:my-8 [&_.ProseMirror_hr]:border-t-2 [&_.ProseMirror_hr]:border-gray-300
+              
+              [&_.ProseMirror_table]:border-collapse [&_.ProseMirror_table]:w-full [&_.ProseMirror_table]:my-4
+              [&_.ProseMirror_td]:border [&_.ProseMirror_td]:border-gray-300 [&_.ProseMirror_td]:px-3 [&_.ProseMirror_td]:py-2
+              [&_.ProseMirror_th]:border [&_.ProseMirror_th]:border-gray-300 [&_.ProseMirror_th]:px-3 [&_.ProseMirror_th]:py-2 [&_.ProseMirror_th]:bg-gray-100 [&_.ProseMirror_th]:font-bold
             "
           />
         </div>
