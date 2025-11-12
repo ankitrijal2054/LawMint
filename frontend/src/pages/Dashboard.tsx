@@ -12,6 +12,7 @@ import { Navbar } from '@/components/Navbar';
 import { DocumentCard } from '@/components/DocumentCard';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserDocuments, useSharedDocuments, useFirmDocuments } from '@/hooks/useDocuments';
+import { useFirm } from '@/hooks/useFirm';
 import { FileText, Users, Plus, Settings, Loader, Search } from 'lucide-react';
 
 type TabType = 'my-documents' | 'shared' | 'firm-wide';
@@ -27,6 +28,9 @@ export function Dashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortType>('recent');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+
+  // Fetch firm data
+  const { data: firm } = useFirm();
 
   // Fetch documents for all tabs
   const { data: myDocuments = [], isLoading: myDocsLoading } = useUserDocuments(user?.uid || null);
@@ -116,8 +120,7 @@ export function Dashboard() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* @ts-ignore */}
-      <Navbar firmName={user?.firmId || 'Firm'} firmCode={user?.firmCode || ''} />
+      <Navbar firmName={firm?.name || 'Firm'} firmCode={firm?.firmCode || ''} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Welcome Section */}

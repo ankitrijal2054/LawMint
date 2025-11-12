@@ -9,9 +9,11 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Loader } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Loader } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { Navbar } from '@/components/Navbar';
+import { useFirm } from '@/hooks/useFirm';
 import { TemplateSelector } from '@/components/TemplateSelector';
 import { SourceDocumentUploader, UploadedFile } from '@/components/SourceDocumentUploader';
 import { useGenerateDocument } from '@/hooks/useAI';
@@ -30,6 +32,7 @@ interface StepData {
 export const NewDocument: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { data: firm } = useFirm();
 
   // Check if user has permission to create documents (paralegals cannot)
   if (user?.role === 'paralegal') {
@@ -218,15 +221,29 @@ export const NewDocument: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      {/* Navbar */}
+      <Navbar/>
+
       {/* Header */}
-      <div className="bg-white border-b border-slate-200">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <h1 className="text-3xl font-bold text-slate-900">
-            Create New Document
-          </h1>
-          <p className="mt-2 text-slate-600">
-            Generate a professional demand letter using AI
-          </p>
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Back to Dashboard"
+              >
+                <ArrowLeft size={24} />
+              </button>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Create New Document</h1>
+                <p className="text-gray-600 mt-2">
+                  Generate a professional demand letter using AI
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -446,7 +463,7 @@ export const NewDocument: React.FC = () => {
             disabled={currentStep === 1 || isGenerating}
             className="flex items-center gap-2 px-6 py-2 text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ArrowLeft className="w-4 h-4" />
             Back
           </button>
 
