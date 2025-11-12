@@ -58,3 +58,6 @@ pids/
 # yarn lock (optional - choose pnpm or npm)
 # yarn.lock
 
+scripts/
+templates/
+serviceAccountKey.json

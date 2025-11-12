@@ -197,6 +197,18 @@ expressApp.get('/health', (_req, res) => {
  */
 expressApp.get('/templates/global', verifyToken, async (req, res) => {
     try {
+        // First, ensure the global templates document exists
+        const globalDocRef = db.collection('templates').doc('global');
+        const globalDocSnapshot = await globalDocRef.get();
+        if (!globalDocSnapshot.exists) {
+            console.log('[templateService] Global templates doc does not exist, creating...');
+            await globalDocRef.set({
+                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                description: 'Global templates collection for LawMint',
+                version: '1.0',
+            });
+        }
+        // Now fetch the items subcollection
         const snapshot = await db
             .collection('templates')
             .doc('global')
@@ -212,10 +224,11 @@ expressApp.get('/templates/global', verifyToken, async (req, res) => {
         });
     }
     catch (error) {
-        console.error('Error fetching global templates:', error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        // Return detailed error for debugging
         return res.status(500).json({
             success: false,
-            error: 'Failed to fetch global templates',
+            error: `Failed to fetch global templates: ${errorMessage}`,
         });
     }
 });

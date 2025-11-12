@@ -103,7 +103,7 @@ export const TemplateCard: React.FC<TemplateCardProps> = ({
 
       {/* Metadata */}
       <div className="p-4 text-xs text-gray-600 space-y-1">
-        <p>📅 Uploaded: {formatDate(template.createdAt)}</p>
+      {template.metadata.uploadedBy != 'system' && <p>📅 Uploaded: {formatDate(template.createdAt)}</p>}
         <p>👤 By: {template.metadata.uploadedBy === 'system' ? 'System' : 'Team Member'}</p>
       </div>
 
