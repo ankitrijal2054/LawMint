@@ -26,12 +26,6 @@ service cloud.firestore {
       return isAuthenticated() && getUserData().role == "paralegal";
     }
     
-    function hasRoleInFirm(firmId, requiredRoles) {
-      return isAuthenticated() && 
-             isSameFirm(firmId) && 
-             getUserData().role in requiredRoles;
-    }
-    
     // ============================================================================
     // USERS COLLECTION
     // Users can only read/write their own profile

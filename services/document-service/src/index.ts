@@ -46,6 +46,7 @@ const defaultOrigins = [
   'http://localhost:5173',
   'http://127.0.0.1:5173',
   'https://lawmint.web.app',
+  'https://lawmint-c5a21.web.app',
 ];
 
 const corsOrigins =
