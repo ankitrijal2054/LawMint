@@ -221,6 +221,7 @@ class ApiClient {
         string,
         {
           name: string;
+          email?: string;
           role: string;
           joinedAt: number;
         }
@@ -228,7 +229,19 @@ class ApiClient {
     }>
   > {
     const url = `${import.meta.env.VITE_AUTH_SERVICE_URL}/auth/firm/${firmId}/members`;
-    return this.request(url, 'GET');
+    console.log(`[API] Fetching firm members from: ${url}`);
+    const response = await this.request<{
+      members: Record<
+        string,
+        {
+          name: string;
+          email?: string;
+          role: string;
+          joinedAt: number;
+        }
+      >;
+    }>(url, 'GET');
+    return response;
   }
 
   /**

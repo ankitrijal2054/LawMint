@@ -38,6 +38,7 @@ export interface AuthContextType {
   loading: boolean;
   error: string | null;
   isAuthenticated: boolean;
+  firmId: string | null; // Convenience property for accessing user's firm
 
   // Methods
   signup: (email: string, password: string, name: string) => Promise<void>;
@@ -338,6 +339,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     loading: state.loading,
     error: state.error,
     isAuthenticated: !!state.user,
+    firmId: state.user?.firmId || null,
     signup,
     login,
     createFirm,

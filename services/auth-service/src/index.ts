@@ -283,6 +283,7 @@ expressApp.post('/auth/createFirm', verifyToken, async (req: Request, res: Respo
       members: {
         [uid]: {
           name: userFullName.trim(),
+          email: email,
           role: 'admin',
           joinedAt: now,
         },
@@ -383,6 +384,7 @@ expressApp.post('/auth/joinFirm', verifyToken, async (req: Request, res: Respons
     const updatedMembers = firmData.members || {};
     updatedMembers[uid] = {
       name: userFullName.trim(),
+      email: email,
       role,
       joinedAt: now,
     };

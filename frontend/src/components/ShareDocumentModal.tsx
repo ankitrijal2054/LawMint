@@ -30,8 +30,12 @@ export const ShareDocumentModal: React.FC<ShareDocumentModalProps> = ({
 
   const { user } = useAuth();
   const { data: document } = useDocument(documentId);
-  const { data: firmMembers = [], isLoading: membersLoading } = useFirmMembers();
+  const { data: firmMembers = [], isLoading: membersLoading, error: membersError } = useFirmMembers();
   const shareDocMutation = useShareDocument(documentId);
+
+  // Debug logging
+  console.log('[ShareDocumentModal] User:', user?.uid);
+  console.log('[ShareDocumentModal] Firm members data:', { count: firmMembers.length, members: firmMembers, loading: membersLoading, error: membersError });
 
   // Only owner can share documents
   const isOwner = document?.ownerId === user?.uid;
@@ -174,6 +178,10 @@ export const ShareDocumentModal: React.FC<ShareDocumentModalProps> = ({
                     <div className="mt-2 border border-gray-300 rounded bg-white max-h-48 overflow-y-auto">
                       {membersLoading ? (
                         <div className="p-3 text-center text-gray-500">Loading members...</div>
+                      ) : membersError ? (
+                        <div className="p-3 text-center text-red-600 text-sm">
+                          Error loading members: {membersError instanceof Error ? membersError.message : 'Unknown error'}
+                        </div>
                       ) : firmMembers.length === 0 ? (
                         <div className="p-3 text-center text-gray-500 text-sm">
                           No other members in your firm

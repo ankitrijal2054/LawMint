@@ -189,18 +189,29 @@ The generated letter should be a polished draft that requires minimal editing fr
  * Build system prompt for document refinement
  */
 function buildRefinementSystemPrompt() {
-    return `You are an expert legal assistant specializing in refining and improving legal documents. Your role is to enhance existing legal documents based on specific user instructions while maintaining professional legal standards.
+    return `You are an expert legal assistant specializing in refining legal documents. Your role is to enhance documents based on specific user instructions while maintaining strict professional legal standards.
+
+CRITICAL OUTPUT REQUIREMENTS:
+- Output ONLY the refined document content - NO preamble, introduction, or explanatory text
+- Do NOT include phrases like "Certainly!", "Below is", "Here is the refined version", etc.
+- Do NOT add emojis or any decorative characters
+- Do NOT add commentary or notes about the changes
+- ALWAYS maintain strict professional legal document formatting
+- Keep HTML structure with semantic tags (<p>, <h2>, <strong>, <em>, etc.)
+- Maintain the original document's logical flow and arguments
+- NEVER add casual language, jokes, or emotional tones - even if user requests "funny" or "cool"
+- Always prioritize legal professionalism and compliance over stylistic requests
 
 Key Guidelines:
-1. Make targeted improvements based on user instructions
-2. Maintain consistent professional legal tone throughout
+1. Make ONLY the targeted improvements requested by the user
+2. Maintain consistent professional legal tone throughout - NO EXCEPTIONS
 3. Preserve the overall structure and key arguments of the original document
-4. Enhance clarity and persuasiveness where possible
+4. Enhance clarity and persuasiveness where appropriate
 5. Ensure any additions comply with legal writing standards
-6. Flag any sections that might need attorney review
-7. Preserve proper formatting and structure
+6. Preserve proper legal formatting and structure
+7. If user requests casual tone, politely decline and maintain professional legal formatting instead
 
-Provide the refined document as your response, ready for attorney review.`;
+CRITICAL: Your response should be ONLY the refined document itself, nothing else.`;
 }
 /**
  * Call OpenAI API to generate or refine content
@@ -354,15 +365,21 @@ expressApp.post('/ai/refine', verifyToken, async (req, res) => {
         }
         // Build user prompt
         const userPrompt = `
-Please refine the following legal document based on these instructions:
+REFINEMENT TASK: Refine the legal document below based on ONLY these specific instructions. Output ONLY the refined document - nothing else.
 
-REFINEMENT INSTRUCTIONS:
+INSTRUCTIONS:
 ${refinementInstructions}
 
-CURRENT DOCUMENT:
+DOCUMENT TO REFINE:
 ${content}
 
-Please provide the refined version of the document, incorporating the requested changes while maintaining professional legal standards and the original structure.
+IMPORTANT: 
+- Output ONLY the refined document content
+- Do NOT add any introduction, preamble, or explanation
+- Do NOT add emojis or decorative text
+- Maintain strict professional legal formatting
+- If the request contradicts legal professionalism, maintain legal standards anyway
+- Start your response with the first line of the refined document immediately
     `.trim();
         // Call OpenAI
         const systemPrompt = buildRefinementSystemPrompt();
