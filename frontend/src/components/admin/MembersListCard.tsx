@@ -11,16 +11,8 @@ import toast from 'react-hot-toast';
 
 export function MembersListCard() {
   const { user } = useAuth();
-  const { data: membersData, isLoading, error } = useFirmMembers();
+  const { data: members = [], isLoading, error } = useFirmMembers();
   const updateRoleMutation = useUpdateMemberRole();
-
-  // Transform members data into array
-  const members = membersData?.members
-    ? Object.entries(membersData.members).map(([uid, member]) => ({
-        uid,
-        ...member,
-      }))
-    : [];
 
   // Sort: admin first, then alphabetically by name
   const sortedMembers = [...members].sort((a, b) => {

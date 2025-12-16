@@ -50,8 +50,8 @@ export function JoinFirmForm({ onSuccess }: JoinFirmFormProps) {
       return;
     }
 
-    // Validate firm code format (should be STENO-XXXXX)
-    const firmCodeRegex = /^STENO-[A-Z0-9]{5}$/;
+    // Validate firm code format (should be LAWMINT-XXXXX)
+    const firmCodeRegex = /^LAWMINT-[A-Z0-9]{5}$/;
     if (!firmCodeRegex.test(firmCode.toUpperCase())) {
       setLocalError('Invalid firm code format. Please check and try again.');
       return;
@@ -205,13 +205,13 @@ export function JoinFirmForm({ onSuccess }: JoinFirmFormProps) {
                   type="text"
                   value={firmCode}
                   onChange={(e) => setFirmCode(e.target.value.toUpperCase())}
-                  placeholder="STENO-XXXXX"
-                  maxLength={11}
+                  placeholder="LAWMINT-XXXXX"
+                  maxLength={13}
                   className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-mono text-center text-lg"
                   disabled={loading}
                 />
                 <p className="text-xs text-slate-500 mt-2">
-                  Ask your firm administrator for the firm code (format: STENO-XXXXX)
+                  Ask your firm administrator for the firm code (format: LAWMINT-XXXXX)
                 </p>
               </div>
 

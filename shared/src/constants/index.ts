@@ -54,8 +54,8 @@ export const ROLE_PERMISSIONS = {
 // FIRM CODES
 // ============================================================================
 
-// Firm code format: STENO-XXXXX (where XXXXX is 5 random alphanumeric characters)
-export const FIRM_CODE_PREFIX = 'STENO';
+// Firm code format: LAWMINT-XXXXX (where XXXXX is 5 random alphanumeric characters)
+export const FIRM_CODE_PREFIX = 'LAWMINT';
 export const FIRM_CODE_LENGTH = 5;
 
 // ============================================================================

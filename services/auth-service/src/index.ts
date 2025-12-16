@@ -100,7 +100,7 @@ const verifyToken = async (req: Request, res: Response, next: NextFunction) => {
 // ============================================================================
 
 /**
- * Generate unique firm code in format: STENO-XXXXX
+ * Generate unique firm code in format: LAWMINT-XXXXX
  */
 function generateFirmCode(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -110,7 +110,7 @@ function generateFirmCode(): string {
     code += chars.charAt(Math.floor(Math.random() * chars.length));
   }
 
-  return `STENO-${code}`;
+  return `LAWMINT-${code}`;
 }
 
 /**

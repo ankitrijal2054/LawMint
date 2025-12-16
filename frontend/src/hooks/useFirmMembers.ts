@@ -38,9 +38,8 @@ export function useFirmMembers() {
           return [];
         }
 
-        // Convert members object to array, excluding current user
+        // Convert members object to array (include all members for admin dashboard)
         const membersArray = Object.entries(membersObject)
-          .filter(([uid]) => uid !== user.uid) // Exclude current user
           .map(([uid, member]: any) => ({
             uid,
             name: member.name || 'Unknown',

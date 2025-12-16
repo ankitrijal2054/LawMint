@@ -123,7 +123,7 @@ const verifyToken = async (req, res, next) => {
 // HELPER FUNCTIONS
 // ============================================================================
 /**
- * Generate unique firm code in format: STENO-XXXXX
+ * Generate unique firm code in format: LAWMINT-XXXXX
  */
 function generateFirmCode() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -131,7 +131,7 @@ function generateFirmCode() {
     for (let i = 0; i < 5; i++) {
         code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
-    return `STENO-${code}`;
+    return `LAWMINT-${code}`;
 }
 /**
  * Check if firm code already exists
