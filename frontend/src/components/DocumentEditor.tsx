@@ -106,25 +106,22 @@ const DocumentEditorComponent: React.FC<DocumentEditorProps> = ({
   useEffect(() => {
     if (!editor) return;
 
+    if (!documentId) {
+      return;
+    }
+
     const docId = documentId;
-    const hasInitialized = initializationRef.current[docId];
+    const hasInitialized = initializationRef.current[docId] ?? false;
+    const hasLoadableContent = !!initialContent && initialContent !== '<p></p>';
+    const shouldInitialize =
+      !isRefinement && !hasInitialized && (shouldInitializeContent || hasLoadableContent);
+    const shouldApplyRefinement = isRefinement && hasLoadableContent;
 
-    // If this is NOT a refinement and document is already initialized, skip
-    if (!isRefinement && hasInitialized) {
+    if (!shouldInitialize && !shouldApplyRefinement) {
       return;
     }
 
-    // If this is a refinement but no content to apply, skip
-    if (isRefinement && (!initialContent || initialContent === '<p></p>')) {
-      return;
-    }
-
-    // If neither initialization nor refinement is needed, skip
-    if (!shouldInitializeContent && !isRefinement) {
-      return;
-    }
-
-    const logPrefix = isRefinement ? '🎨 REFINEMENT' : '🎬 INITIALIZATION';
+    const logPrefix = shouldApplyRefinement ? '🎨 REFINEMENT' : '🎬 INITIALIZATION';
     console.log(logPrefix, '- Starting for document:', docId);
 
     // For collaborative mode (ydoc exists)
@@ -148,7 +145,7 @@ const DocumentEditorComponent: React.FC<DocumentEditorProps> = ({
       }
 
       // Mark as initialized only if this was a true initialization
-      if (!isRefinement) {
+      if (shouldInitialize && initialContent && initialContent !== '<p></p>') {
         initializationRef.current[docId] = true;
       }
     } else {
@@ -162,13 +159,13 @@ const DocumentEditorComponent: React.FC<DocumentEditorProps> = ({
       }
 
       // Mark as initialized only if this was a true initialization
-      if (!isRefinement) {
+      if (shouldInitialize && initialContent && initialContent !== '<p></p>') {
         initializationRef.current[docId] = true;
       }
     }
 
     // Signal that refinement has been applied
-    if (isRefinement && onRefinementApplied) {
+    if (shouldApplyRefinement && onRefinementApplied) {
       console.log(`${logPrefix} - Applied to editor, calling callback`);
       onRefinementApplied();
     }

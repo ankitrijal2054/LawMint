@@ -304,19 +304,37 @@ expressApp.get('/documents/:documentId', verifyToken, async (req: Request, res: 
       });
     }
 
-    const document = docSnap.data();
+    type FirestoreDocument = admin.firestore.DocumentData & {
+      ownerId: string;
+      visibility: 'private' | 'shared' | 'firm-wide';
+      firmId: string;
+      sharedWith?: string[];
+      content?: string;
+    };
 
-    if (!document) {
+    const rawDocument = docSnap.data() as FirestoreDocument | undefined;
+
+    if (!rawDocument) {
       return res.status(404).json({
         success: false,
         error: 'Document not found',
       });
     }
 
+    // Include Firestore document ID for frontend consumers that expect `id`
+    const document: (FirestoreDocument & { id: string }) = {
+      id: docSnap.id,
+      ...rawDocument,
+    };
+
     // Check permissions
     const isOwner = document.ownerId === uid;
-    const isFirmWide = document.visibility === 'firm-wide' && document.firmId === (await getUserData(uid))?.firmId;
-    const isShared = document.visibility === 'shared' && document.sharedWith.includes(uid);
+    const isFirmWide =
+      document.visibility === 'firm-wide' && document.firmId === (await getUserData(uid))?.firmId;
+    const isShared =
+      document.visibility === 'shared' && Array.isArray(document.sharedWith)
+        ? document.sharedWith.includes(uid)
+        : false;
 
     if (!isOwner && !isFirmWide && !isShared) {
       return res.status(403).json({

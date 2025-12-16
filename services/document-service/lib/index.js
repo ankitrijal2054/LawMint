@@ -307,17 +307,24 @@ expressApp.get('/documents/:documentId', verifyToken, async (req, res) => {
                 error: 'Document not found',
             });
         }
-        const document = docSnap.data();
-        if (!document) {
+        const rawDocument = docSnap.data();
+        if (!rawDocument) {
             return res.status(404).json({
                 success: false,
                 error: 'Document not found',
             });
         }
+        // Include Firestore document ID for frontend consumers that expect `id`
+        const document = {
+            id: docSnap.id,
+            ...rawDocument,
+        };
         // Check permissions
         const isOwner = document.ownerId === uid;
         const isFirmWide = document.visibility === 'firm-wide' && document.firmId === (await getUserData(uid))?.firmId;
-        const isShared = document.visibility === 'shared' && document.sharedWith.includes(uid);
+        const isShared = document.visibility === 'shared' && Array.isArray(document.sharedWith)
+            ? document.sharedWith.includes(uid)
+            : false;
         if (!isOwner && !isFirmWide && !isShared) {
             return res.status(403).json({
                 success: false,

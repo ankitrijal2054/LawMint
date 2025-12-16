@@ -75,12 +75,14 @@ const DocumentEditorPage: React.FC = () => {
     }
   }, [documentId]);
 
+  const docIdentifier = document?.documentId || document?.id;
+
   // Load document data and set it for initialization
   // IMPORTANT: Only set content state on first document load, not on every fetch
   useEffect(() => {
     if (document && shouldInitializeContent) {
       console.log('📋 Document fetched, setting initial state:', {
-        id: document.id,
+        id: docIdentifier,
         title: document.title,
         contentLength: document.content?.length || 0,
       });
@@ -92,7 +94,7 @@ const DocumentEditorPage: React.FC = () => {
       // User edits should not trigger re-initialization
       setShouldInitializeContent(false);
     }
-  }, [document?.id]);
+  }, [docIdentifier, shouldInitializeContent, document?.content]);
 
   // Handle title change with debounced auto-save (silent)
   const handleTitleChange = (newTitle: string) => {
