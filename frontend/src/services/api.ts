@@ -43,7 +43,7 @@ class ApiClient {
    */
   private async request<T>(
     url: string,
-    method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET',
+    method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' = 'GET',
     body?: unknown
   ): Promise<ApiResponse<T>> {
     try {
@@ -251,6 +251,58 @@ class ApiClient {
   async healthCheck(): Promise<ApiResponse<{ message: string }>> {
     const url = `${import.meta.env.VITE_AUTH_SERVICE_URL}/health`;
     return this.requestUnauthenticated(url, 'GET');
+  }
+
+  // =========================================================================
+  // ADMIN ENDPOINTS
+  // =========================================================================
+
+  /**
+   * PATCH /auth/firm/:firmId/members/:uid/role
+   * Update a member's role (admin only)
+   */
+  async updateMemberRole(
+    firmId: string,
+    targetUid: string,
+    newRole: 'lawyer' | 'paralegal'
+  ): Promise<
+    ApiResponse<{
+      message: string;
+      updatedRole: string;
+    }>
+  > {
+    const url = `${import.meta.env.VITE_AUTH_SERVICE_URL}/auth/firm/${firmId}/members/${targetUid}/role`;
+    return this.request(url, 'PATCH', { newRole });
+  }
+
+  /**
+   * GET /auth/firm/:firmId/settings
+   * Get firm settings including API key status (admin only)
+   */
+  async getFirmSettings(firmId: string): Promise<
+    ApiResponse<{
+      hasOpenAIKey: boolean;
+    }>
+  > {
+    const url = `${import.meta.env.VITE_AUTH_SERVICE_URL}/auth/firm/${firmId}/settings`;
+    return this.request(url, 'GET');
+  }
+
+  /**
+   * POST /auth/firm/:firmId/api-key
+   * Set firm's OpenAI API key (admin only)
+   */
+  async setFirmApiKey(
+    firmId: string,
+    apiKey: string
+  ): Promise<
+    ApiResponse<{
+      message: string;
+      hasApiKey: boolean;
+    }>
+  > {
+    const url = `${import.meta.env.VITE_AUTH_SERVICE_URL}/auth/firm/${firmId}/api-key`;
+    return this.request(url, 'POST', { apiKey });
   }
 
   // =========================================================================

@@ -1,25 +1,22 @@
 /**
  * Navbar Component
  * Top navigation bar with firm info and user menu
- * Shows firm code for admins, firm name for all users
+ * Admin profile icon links to Admin Dashboard
  */
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { FileText, LogOut, User, Menu, X, Copy, CheckCircle2 } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { FileText, LogOut, User, Menu, X, Settings } from 'lucide-react';
 
 interface NavbarProps {
   firmName?: string;
-  firmCode?: string;
 }
 
-export function Navbar({ firmName, firmCode }: NavbarProps) {
+export function Navbar({ firmName }: NavbarProps) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -27,15 +24,6 @@ export function Navbar({ firmName, firmCode }: NavbarProps) {
       navigate('/login');
     } catch (error) {
       console.error('Logout error:', error);
-    }
-  };
-
-  const handleCopyFirmCode = () => {
-    if (firmCode) {
-      navigator.clipboard.writeText(firmCode);
-      setCopied(true);
-      toast.success('Firm code copied!');
-      setTimeout(() => setCopied(false), 2000);
     }
   };
 
@@ -64,25 +52,6 @@ export function Navbar({ firmName, firmCode }: NavbarProps) {
                 <p className="text-sm font-semibold text-slate-900">{firmName}</p>
               </div>
             )}
-            {firmCode && user?.role === 'admin' && (
-              <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg border border-blue-200">
-                <div className="text-left">
-                  <p className="text-xs text-slate-500">Firm Code</p>
-                  <p className="text-sm font-mono font-semibold text-blue-600">{firmCode}</p>
-                </div>
-                <button
-                  onClick={handleCopyFirmCode}
-                  className="ml-2 p-1 hover:bg-blue-200 rounded transition-colors"
-                  title="Copy firm code"
-                >
-                  {copied ? (
-                    <CheckCircle2 className="w-4 h-4 text-green-600" />
-                  ) : (
-                    <Copy className="w-4 h-4 text-slate-600" />
-                  )}
-                </button>
-              </div>
-            )}
           </div>
 
           {/* Right: User Menu */}
@@ -93,9 +62,20 @@ export function Navbar({ firmName, firmCode }: NavbarProps) {
                 <p className="text-sm font-semibold text-slate-900">{user?.name}</p>
                 <p className="text-xs text-slate-500 capitalize">{user?.role}</p>
               </div>
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
-                <User className="w-6 h-6 text-white" />
-              </div>
+              {/* Admin: Clickable profile icon to Admin Dashboard */}
+              {user?.role === 'admin' ? (
+                <button
+                  onClick={() => navigate('/admin')}
+                  className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center hover:ring-2 hover:ring-purple-300 transition-all cursor-pointer"
+                  title="Admin Dashboard"
+                >
+                  <Settings className="w-5 h-5 text-white" />
+                </button>
+              ) : (
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+                  <User className="w-6 h-6 text-white" />
+                </div>
+              )}
             </div>
 
             {/* Mobile Menu Button */}
@@ -144,23 +124,18 @@ export function Navbar({ firmName, firmCode }: NavbarProps) {
             </div>
           )}
 
-          {firmCode && user?.role === 'admin' && (
-            <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
-              <div>
-                <p className="text-xs text-slate-500">Firm Code</p>
-                <p className="text-sm font-mono font-semibold text-blue-600">{firmCode}</p>
-              </div>
-              <button
-                onClick={handleCopyFirmCode}
-                className="p-1 hover:bg-blue-200 rounded transition-colors"
-              >
-                {copied ? (
-                  <CheckCircle2 className="w-4 h-4 text-green-600" />
-                ) : (
-                  <Copy className="w-4 h-4 text-slate-600" />
-                )}
-              </button>
-            </div>
+          {/* Admin Settings Button (Mobile) */}
+          {user?.role === 'admin' && (
+            <button
+              onClick={() => {
+                navigate('/admin');
+                setIsMenuOpen(false);
+              }}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-lg border border-purple-200 transition-colors"
+            >
+              <Settings className="w-5 h-5" />
+              <span className="text-sm font-medium">Admin Dashboard</span>
+            </button>
           )}
 
           {/* Logout Button (Mobile) */}

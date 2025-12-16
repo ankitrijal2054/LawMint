@@ -50,10 +50,12 @@ export interface Firm {
   updatedAt: number; // Timestamp
   memberCount: number;
   members?: Record<string, FirmMember>; // { uid: { name, role, joinedAt } }
+  encryptedOpenAIKey?: string; // AES-256 encrypted OpenAI API key
 }
 
 export interface FirmMember {
   name: string;
+  email: string;
   role: UserRole;
   joinedAt: number; // Timestamp
 }
@@ -177,5 +179,37 @@ export enum ErrorCode {
   INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR',
   INVALID_REQUEST = 'INVALID_REQUEST',
   SERVICE_UNAVAILABLE = 'SERVICE_UNAVAILABLE',
+
+  // Admin errors
+  CANNOT_DEMOTE_SELF = 'CANNOT_DEMOTE_SELF',
+  CANNOT_CHANGE_ADMIN_ROLE = 'CANNOT_CHANGE_ADMIN_ROLE',
+  INVALID_API_KEY = 'INVALID_API_KEY',
+  API_KEY_NOT_CONFIGURED = 'API_KEY_NOT_CONFIGURED',
+}
+
+// ============================================================================
+// ADMIN DASHBOARD TYPES
+// ============================================================================
+
+export interface UpdateMemberRolePayload {
+  newRole: 'lawyer' | 'paralegal'; // Cannot change to 'admin'
+}
+
+export interface UpdateMemberRoleResponse {
+  message: string;
+  updatedRole: UserRole;
+}
+
+export interface SetApiKeyPayload {
+  apiKey: string; // Plain text - will be encrypted server-side
+}
+
+export interface SetApiKeyResponse {
+  message: string;
+  hasApiKey: boolean;
+}
+
+export interface FirmSettingsResponse {
+  hasOpenAIKey: boolean;
 }
 

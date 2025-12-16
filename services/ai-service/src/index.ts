@@ -1,6 +1,7 @@
 /**
  * AI Service Microservice
  * Handles AI-powered document generation and refinement using OpenAI API.
+ * Uses per-firm encrypted OpenAI API keys stored in Firestore.
  *
  * Endpoints:
  * - POST /ai/generate - Generate demand letter draft from template + sources
@@ -13,6 +14,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors, { CorsOptions } from 'cors';
 import dotenv from 'dotenv';
 import OpenAI from 'openai';
+import * as crypto from 'crypto';
 
 // Initialize environment variables
 dotenv.config();
@@ -60,19 +62,63 @@ expressApp.options('*', cors(corsOptions));
 expressApp.use(express.json({ limit: '50mb' }));
 
 // ============================================================================
-// OPENAI INITIALIZATION
+// OPENAI CONFIGURATION
 // ============================================================================
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 
-if (!OPENAI_API_KEY) {
-  console.warn('⚠️ WARNING: OPENAI_API_KEY not set. AI endpoints will fail.');
+// ============================================================================
+// ENCRYPTION UTILITIES
+// ============================================================================
+
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY; // 32-byte hex key for AES-256
+
+/**
+ * Decrypt a string using AES-256-CBC
+ * Expects format: iv_hex:encrypted_hex
+ */
+function decryptApiKey(encryptedKey: string): string {
+  if (!ENCRYPTION_KEY) {
+    throw new Error('ENCRYPTION_KEY not configured');
+  }
+  const parts = encryptedKey.split(':');
+  if (parts.length !== 2) {
+    throw new Error('Invalid encrypted key format');
+  }
+  const iv = Buffer.from(parts[0], 'hex');
+  const encryptedText = parts[1];
+  const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(ENCRYPTION_KEY, 'hex'), iv);
+  let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
+  decrypted += decipher.final('utf8');
+  return decrypted;
 }
 
-const openai = new OpenAI({
-  apiKey: OPENAI_API_KEY,
-});
+/**
+ * Get firm's OpenAI API key from Firestore
+ * Returns decrypted API key or throws error if not configured
+ */
+async function getFirmOpenAIKey(firmId: string): Promise<string> {
+  const firmDoc = await db.collection('firms').doc(firmId).get();
+
+  if (!firmDoc.exists) {
+    throw new Error('Firm not found');
+  }
+
+  const firmData = firmDoc.data();
+
+  if (!firmData?.encryptedOpenAIKey) {
+    throw new Error('OpenAI API key not configured for this firm. Please ask your administrator to configure it in the Admin Dashboard.');
+  }
+
+  return decryptApiKey(firmData.encryptedOpenAIKey);
+}
+
+/**
+ * Create OpenAI client with firm-specific API key
+ */
+function createOpenAIClient(apiKey: string): OpenAI {
+  return new OpenAI({ apiKey });
+}
 
 // ============================================================================
 // MIDDLEWARE
@@ -203,14 +249,13 @@ CRITICAL: Your response should be ONLY the refined document itself, nothing else
 
 /**
  * Call OpenAI API to generate or refine content
+ * @param openaiClient - OpenAI client instance with firm-specific API key
+ * @param systemPrompt - System prompt for the AI
+ * @param userPrompt - User prompt with the content to process
  */
-async function callOpenAI(systemPrompt: string, userPrompt: string): Promise<string> {
+async function callOpenAI(openaiClient: OpenAI, systemPrompt: string, userPrompt: string): Promise<string> {
   try {
-    if (!OPENAI_API_KEY) {
-      throw new Error('OpenAI API key not configured');
-    }
-
-    const response = await openai.chat.completions.create({
+    const response = await openaiClient.chat.completions.create({
       model: OPENAI_MODEL,
       messages: [
         {
@@ -238,7 +283,7 @@ async function callOpenAI(systemPrompt: string, userPrompt: string): Promise<str
       throw new Error('OpenAI API rate limit exceeded. Please try again in a moment.');
     }
     if (error.status === 401) {
-      throw new Error('OpenAI API authentication failed. Check API key configuration.');
+      throw new Error('OpenAI API authentication failed. Please check your firm\'s API key in the Admin Dashboard.');
     }
     if (error.message?.includes('exceeded')) {
       throw new Error('Request exceeded token limits. Please reduce content size.');
@@ -259,18 +304,46 @@ expressApp.get('/health', (_req: Request, res: Response) => {
     success: true,
     message: 'AI service is running',
     model: OPENAI_MODEL,
-    hasApiKey: !!OPENAI_API_KEY,
+    note: 'Per-firm API keys are configured via Admin Dashboard',
   });
 });
 
 /**
  * POST /ai/generate - Generate demand letter draft
  * Body: { templateId?, templateContent?, sourceTexts[], customInstructions? }
+ * Uses firm-specific OpenAI API key from Firestore
  */
 expressApp.post('/ai/generate', verifyToken, async (req: Request, res: Response) => {
   try {
     const uid = (req as any).user.uid;
     const { templateId, templateContent, sourceTexts = [], customInstructions = '' } = req.body;
+
+    // Get user's firm ID
+    const userData = await getUserData(uid);
+    if (!userData?.firmId) {
+      return res.status(400).json({
+        success: false,
+        error: 'User is not associated with a firm',
+        code: 'NO_FIRM',
+      });
+    }
+
+    const firmId = userData.firmId;
+
+    // Get firm's OpenAI API key
+    let apiKey: string;
+    try {
+      apiKey = await getFirmOpenAIKey(firmId);
+    } catch (error: any) {
+      return res.status(403).json({
+        success: false,
+        error: error.message || 'OpenAI API key not configured for this firm',
+        code: 'API_KEY_NOT_CONFIGURED',
+      });
+    }
+
+    // Create OpenAI client with firm's API key
+    const openaiClient = createOpenAIClient(apiKey);
 
     // Validate inputs
     if (!sourceTexts || sourceTexts.length === 0) {
@@ -313,9 +386,9 @@ ${customInstructions ? `SPECIAL INSTRUCTIONS:\n${customInstructions}\n\n` : ''}
 Please generate a complete, professional demand letter that incorporates the template structure and information from the source documents. The letter should be ready for attorney review and adjustment.
     `.trim();
 
-    // Call OpenAI
+    // Call OpenAI with firm's client
     const systemPrompt = buildGenerationSystemPrompt();
-    const generatedContent = await callOpenAI(systemPrompt, userPrompt);
+    const generatedContent = await callOpenAI(openaiClient, systemPrompt, userPrompt);
 
     // Log generation for analytics (future use)
     console.log(JSON.stringify({
@@ -323,6 +396,7 @@ Please generate a complete, professional demand letter that incorporates the tem
       service: 'ai-service',
       action: 'generate',
       userId: uid,
+      firmId: firmId,
       model: OPENAI_MODEL,
       templateId: templateId || 'custom',
       sourceCount: sourceTexts.length,
@@ -339,7 +413,8 @@ Please generate a complete, professional demand letter that incorporates the tem
   } catch (error: any) {
     console.error('Error generating document:', error);
 
-    res.status(error.status === 401 ? 401 : 500).json({
+    const statusCode = error.message?.includes('API key') ? 403 : 500;
+    res.status(statusCode).json({
       success: false,
       error: error.message || 'Failed to generate document',
     });
@@ -349,11 +424,39 @@ Please generate a complete, professional demand letter that incorporates the tem
 /**
  * POST /ai/refine - Refine existing document
  * Body: { content, refinementInstructions }
+ * Uses firm-specific OpenAI API key from Firestore
  */
 expressApp.post('/ai/refine', verifyToken, async (req: Request, res: Response) => {
   try {
     const uid = (req as any).user.uid;
     const { content, refinementInstructions } = req.body;
+
+    // Get user's firm ID
+    const userData = await getUserData(uid);
+    if (!userData?.firmId) {
+      return res.status(400).json({
+        success: false,
+        error: 'User is not associated with a firm',
+        code: 'NO_FIRM',
+      });
+    }
+
+    const firmId = userData.firmId;
+
+    // Get firm's OpenAI API key
+    let apiKey: string;
+    try {
+      apiKey = await getFirmOpenAIKey(firmId);
+    } catch (error: any) {
+      return res.status(403).json({
+        success: false,
+        error: error.message || 'OpenAI API key not configured for this firm',
+        code: 'API_KEY_NOT_CONFIGURED',
+      });
+    }
+
+    // Create OpenAI client with firm's API key
+    const openaiClient = createOpenAIClient(apiKey);
 
     // Validate inputs
     if (!content || content.trim().length === 0) {
@@ -380,7 +483,7 @@ ${refinementInstructions}
 DOCUMENT TO REFINE:
 ${content}
 
-IMPORTANT: 
+IMPORTANT:
 - Output ONLY the refined document content
 - Do NOT add any introduction, preamble, or explanation
 - Do NOT add emojis or decorative text
@@ -389,9 +492,9 @@ IMPORTANT:
 - Start your response with the first line of the refined document immediately
     `.trim();
 
-    // Call OpenAI
+    // Call OpenAI with firm's client
     const systemPrompt = buildRefinementSystemPrompt();
-    const refinedContent = await callOpenAI(systemPrompt, userPrompt);
+    const refinedContent = await callOpenAI(openaiClient, systemPrompt, userPrompt);
 
     // Log refinement for analytics (future use)
     console.log(JSON.stringify({
@@ -399,6 +502,7 @@ IMPORTANT:
       service: 'ai-service',
       action: 'refine',
       userId: uid,
+      firmId: firmId,
       model: OPENAI_MODEL,
       success: true,
     }));
@@ -413,7 +517,8 @@ IMPORTANT:
   } catch (error: any) {
     console.error('Error refining document:', error);
 
-    res.status(error.status === 401 ? 401 : 500).json({
+    const statusCode = error.message?.includes('API key') ? 403 : 500;
+    res.status(statusCode).json({
       success: false,
       error: error.message || 'Failed to refine document',
     });

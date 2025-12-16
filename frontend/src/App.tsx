@@ -16,11 +16,13 @@ import { Dashboard } from '@/pages/Dashboard';
 import { Templates } from '@/pages/Templates';
 import { NewDocument } from '@/pages/NewDocument';
 import DocumentEditorPage from '@/pages/DocumentEditorPage';
+import { AdminDashboard } from '@/pages/AdminDashboard';
 
 // Components
 import { CreateFirmForm } from '@/components/CreateFirmForm';
 import { JoinFirmForm } from '@/components/JoinFirmForm';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { AdminProtectedRoute } from '@/components/AdminProtectedRoute';
 
 // Create QueryClient instance
 const queryClient = new QueryClient();
@@ -69,6 +71,16 @@ export function App() {
               <ProtectedRoute>
                 <DocumentEditorPage />
               </ProtectedRoute>
+            }
+          />
+
+          {/* Admin Routes */}
+          <Route
+            path="/admin"
+            element={
+              <AdminProtectedRoute>
+                <AdminDashboard />
+              </AdminProtectedRoute>
             }
           />
 
